@@ -1,0 +1,79 @@
+# Retro bốn phase — Đảo Đèn Lồng
+
+Ngày20/11/2026. Đánh giá dựa trên mã, output kiểm chứng và AI log đã lưu;
+không coi test ẩn chưa được cung cấp là đã đạt. Bản ghi này dài khoảng hai trang
+khi in A4 cỡ chữ thông thường. Token là ước tính, không phải dữ liệu hóa đơn.
+
+## Evaluation qua bốn phase
+
+**Phase1 — nền tảng.** Core seeded tách Three.js và CLI JSONL tạo được điểm tựa
+để agent sửa game mà vẫn kiểm chứng được hành vi. Tuy vậy baseline tiếp nhận
+chưa có tagphase-1, số liệu tự chọn và một số phần hoàn thiện còn dang dở.
+Vì vậy không thể tái dựng một bản phát hành Phase1 đáng tin chỉ bằng tag mới.
+Giữ lịch sử thật hữu ích hơn đánh dấu hoàn thành hồi tố.
+
+**Phase2 — chuẩn hóa.** Thay số liệu bằng contract rồi mở ba đảo, dash, bùa,
+Gió Lạc, gió và chuỗi màn hình.101test,13scenario và31kiểm tra GUI trong proof
+giúp tách lỗi vật lý khỏi lỗi camera/input. Lỗi quan trọng là camera truyền
+radian vào trường độ; input chạy theo hướng khác hình nhìn. Kiểm thử bàn phím
+trong trình duyệt và phép đo quãng đường đã phát hiện, unit test thuần không đủ.
+
+**Phase3 — thay luật.** ADR chọn dầu nguyên đơn vị1/60, gom drain trước tương
+tác, đổi thắng sớm sang bình minh và tính điểm từ dầu chưa làm tròn.144test,
+23scenario và45check GUI kiểm các biên30dầu, tick6000, thua ưu tiên và relight.
+Một fixture đặt hai đèn cùng chỗ làm E châm đèn vừa sáng thay vì chọn đèn tắt;
+agent ban đầu kỳ vọng sai. Đọc event refuel rồi sửa fixture, không sửa luật để
+test xanh. Ảnh còn phát hiện thanh dầu lệch tâm và toast che nhắc tương tác.
+
+**Phase4 — phát hành.** Thêm đo thực, soak, top10 lưu đĩa, đổi phím và tùy chọn
+tiếp cận;160test và58check GUI.24trace Phase3 được đối chiếu từng byte, nên
+có bằng chứng luật không bị đổi khi tối ưu renderer. Benchmark ghi rawdt và
+metadata, thay vì chỉ chụp một con số FPS. Bản ZIP cần chạy được khi không có
+node_modules; thử clean install và giải nén giúp kiểm tra lời hứa trong README.
+GitHub Release phụ thuộc repo cá nhân/kết nối thật; artifact local không đồng
+nghĩa đã phát hành online. Trạng thái đó phải được nêu đúng khi bàn giao.
+
+## Làm việc với AI: điều hiệu quả và điều chưa tốt
+
+Hiệu quả nhất là yêu cầu agent làm ra bằng chứng có thể chạy lại. Contract
+định nghĩa bước tick, event, seed và thứ tự xử lý giúp yêu cầu ngôn ngữ trở
+thành assertion cụ thể. Tách core/render cho phép chạy hàng nghìn tick nhanh,
+đồng thời giữ bài kiểm thử GUI riêng cho thứ người chơi thực sự nhìn thấy.
+ADR trước thay luật giúp tránh vô tình giữ công thức điểm cũ.
+
+AI dễ nhầm "test xanh" với "sản phẩm hoàn chỉnh". Bộ test có thể cùng sai
+với code, screenshot có thể che lỗi ở cỡ chữ lớn, và headlessFPS không thay
+benchmark cửa sổ thật. Phase4 review đã thấy cảnh bench chỉ có ba đèn sáng,
+bỏ mất hai đèn tắt khiến wander đổi đường đi. Sửa đủ năm đèn rồi đo lại,
+không dùng số đo trước sửa để nộp. Validation phím cũng phải chuẩn hóa hoa/
+thường trước kiểm trùng; chỉ kiểm lúc nhấn nút không bắt được dữ liệu cũ lỗi.
+
+Soak đầu tiên tăng RSS khoảng1,203× vì JIT/heap, vượt nhẹ ngưỡng. Không trừ
+RSS hay bơm baseline để qua. Lệnh soak công khai chuyển sang V8 interpreter
+và GC tại hai mốc để đo giữ state, vẫn chạy nguyên GameSim/input; phương pháp
+và kết quả thật được ghi. Đây là một quyết định đo lường cần công khai, không
+phải bằng chứng browser không bao giờ tăng bộ nhớ. Harness quay demo còn
+vấp việc tuần tự hóa cả object Three.js: đổi điều kiện chờ sang boolean.
+
+## Harness, token và nếu làm lại
+
+AGENTS.md hữu ích nhất ở ranh giới core, nguồn tuning duy nhất và cấm giả
+bằng chứng. Skill verify theo phase dẫn đúng lệnh, lưu proof mới mà không
+ghi đè phase cũ. Các script verify/gui/bench/package là kiểm tra có thể lặp;
+workflow CI/Release đưa cùng lệnh vào lúc push. Không thêm hook tự động sửa
+test hoặc chặn công việc vì chưa có bằng chứng nó giúp; ít lớp harness nhưng
+mỗi lớp có đầu ra rõ ràng dễ kiểm hơn một prompt dài lặp lại.
+
+AI log ban đầu ước Phase1 khoảng95k token; vòng hoàn thiện Phase2 khoảng45–65k,
+Phase3 khoảng30–45k, Phase4 khoảng45–65k. Tổng tham khảo **215–270k token**,
+không có telemetry để xác nhận tổng hay chi phí tiền. Không suy giá từ model
+hoặc gán một hóa đơn giả. Tiết kiệm bằng rg/đọc theo phần, gom các truy vấn
+độc lập, tái dùng geometry/harness, không gửi base64 ảnh/video vào ngữ cảnh,
+chỉ chạy lại bài đo dài khi mã hoặc cảnh liên quan thay đổi.
+
+Nếu làm lại: tag baseline đầu tiên ngay khi nhận, viết acceptance và fixture
+biên trước feature, đo một cảnh đông từ sớm, giữ đường đóng gói sạch ngay từ
+Phase1, và xác định repo phát hành trước ngày nộp. Chừa thời gian cho review
+ảnh, kiểm thử lưu dữ liệu và quay demo; đây là các bước test logic không thể
+thay thế. Nghe âm thanh bằng tai và test trên máy giảng viên vẫn cần người
+thực hiện, phải ghi giới hạn thay vì tự đánh dấu đã xong.

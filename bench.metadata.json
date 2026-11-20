@@ -1,0 +1,57 @@
+{
+  "scene": {
+    "shades": 200,
+    "motes": 100,
+    "wander": true,
+    "player": [
+      0,
+      0,
+      0
+    ],
+    "lit": [
+      {
+        "id": "L1",
+        "fuel": 100
+      },
+      {
+        "id": "L2",
+        "fuel": 100
+      },
+      {
+        "id": "L3",
+        "fuel": 100
+      }
+    ],
+    "drawCalls": 50,
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/157.0.8103.80",
+    "revision": "@5cb0fce6746acfc926045c45b23d811d479c49b9",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "jsVersion": "15.7.112.43"
+  },
+  "flags": [
+    "--app=about:blank",
+    "--enable-automation",
+    "--remote-debugging-port=0",
+    "--window-size=1280,720",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-background-networking",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
+    "--disable-frame-rate-limit",
+    "--disable-gpu-vsync"
+  ],
+  "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+  "headless": false,
+  "warmup_s": 3,
+  "duration_s": 30,
+  "peakMemoryExplanation": "Web renderer is multiprocess; portable per-game RSS is unavailable, reported null."
+}

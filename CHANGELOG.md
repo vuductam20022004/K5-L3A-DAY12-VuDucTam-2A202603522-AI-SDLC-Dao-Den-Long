@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.0.0 / Phase 4 — Bình minh (Contract 1.3)
+
+- Benchmark cửa sổ1280×720: canonical200wander/100motes/5đèn với3đèn sáng,
+  camera15s/vòng, warmup3s, rawdt, FPS/p1-low/p95/load và thông tin máy.
+- Instancing bóng/đom đóm ở cảnh đông, giữ hình khối/ánh sáng chuẩn; không đổi
+  gameplay hay JSONL headless. Soak10Đêm trong cùngprocess với seed/input chuẩn.
+- Bảng điểm top10 lưu đĩa, tên hợp lệ, tie theo thời điểm, CLI export và menu.
+- Đổi9phím, báo trùng, reset/lưu; chữ18px/lớn×1.25, giảm chuyển động, caption
+  và mũi tên khi bóng xuất hiện, chỉ báo gió/10giây/cuối dầu.
+- ZIP web+Node không cần node_modules, workflow Release, demoMP4, retro và proof.
+- Thay đổi giao diện lệnh: contract_version1.3, thêm bench_cmd/soak_cmd;
+  run_cmd chuyển từ `npm run dev` sang `node dist/server.js` để hỗ trợ --export-leaderboard.
+  Headless vẫn ở `node dist/headless.js` / `npm run headless`, luậtv1.2 giữ nguyên.
+  Bảng điểm cần server Node có quyền ghi, mở file HTML trực tiếp không lưu được.
+
 ## Phase 3 — Đèn cạn dầu (Contract 1.2)
 
 Breaking changes so với tag `phase-2`:
@@ -21,3 +36,19 @@ Breaking changes so với tag `phase-2`:
 Test cũ thắng sớm/all_lit, thưởng thời gian, điểm nạp10, duration cũ và túi
 10 cố định sau thắp đèn được cập nhật vì ticket thay luật. Không xóa/skip test
 movement/physics/pause/bùa/Gió Lạc/maps/input/CLI. Xem ADR-003 và báo cáo proof.
+
+## Phase 2 — Ba hòn đảo (Contract 1.1)
+
+- Chuẩn hóa60tick, movement6, jump7/gravity−20, carry10, lamp10, pulse3/5m,
+  đèn an toàn6m; mở rộng3bản đồ và chuỗi3Đêm, pause, cài đặt/âm thanh/HUD.
+- Thêm lướt14m/s, bùa, bục nhảy, gió và Gió Lạc; scenario và snapshotv1.1.
+- Hằng số thay giá trị Phase1 tự chọn. Duration300/330/360, điểm và thắng sớm
+  của phase này đã được Ticket-03 thay thế; không còn áp dụng ởv1.0.0.
+- Bổ sung test/headless/ảnh và harness; bằng chứng/tag phase-2 được giữ nguyên.
+
+## Phase 1 — Đêm đầu (Contract 1.0, baseline được tiếp nhận)
+
+- Khung game Three.js/TypeScript, một đảo, Mây, đom đóm, đèn và Bóng Mực.
+- Core seeded tách renderer, CLI JSONL và các test đầu tiên; AGENTS ban đầu.
+- Baseline tiếp nhận không có tag phase-1. Không dựng lại tag giả từ mã phase sau;
+  giới hạn lịch sử và đánh giá ban đầu được nêu trong retro/AI log.

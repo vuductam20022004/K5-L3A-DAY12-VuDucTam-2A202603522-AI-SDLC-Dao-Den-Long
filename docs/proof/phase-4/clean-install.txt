@@ -1,0 +1,51 @@
+> npm ci
+
+added 57 packages, and audited 58 packages in 5s
+
+12 packages are looking for funding
+  run `npm fund` for details
+
+6 vulnerabilities (3 moderate, 1 high, 2 critical)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+> npm run build
+
+> dao-den-long@1.0.0 build
+> npm run typecheck && npm run build:web && npm run build:headless && npm run build:tools
+
+
+> dao-den-long@1.0.0 typecheck
+> tsc --noEmit
+
+
+> dao-den-long@1.0.0 build:web
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 24 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/web/index.html                     2.15 kB │ gzip:   1.10 kB
+dist/web/assets/index-DxVQADOv.css      7.92 kB │ gzip:   2.37 kB
+dist/web/assets/index-C0oKq0F4.js       2.22 kB │ gzip:   1.14 kB
+dist/web/assets/client-BfGnDMUc.js      2.46 kB │ gzip:   1.45 kB
+dist/web/assets/game-T0J4W2HN.js       22.58 kB │ gzip:   9.23 kB
+dist/web/assets/renderer-DZmBvX6Q.js   44.50 kB │ gzip:  14.30 kB
+dist/web/assets/three-BLx1_-WR.js     517.26 kB │ gzip: 131.71 kB
+✓ built in 1.00s
+
+> dao-den-long@1.0.0 build:headless
+> esbuild src/headless.ts --bundle --platform=node --format=esm --target=node18 --outfile=dist/headless.js
+
+
+> dao-den-long@1.0.0 build:tools
+> esbuild src/server.ts src/soak.ts --bundle --platform=node --format=esm --target=node22 --outdir=dist
+
+
+> npm start -- --port 0
+OK clean folder: npm ci → npm run build → npm start; web/API 200

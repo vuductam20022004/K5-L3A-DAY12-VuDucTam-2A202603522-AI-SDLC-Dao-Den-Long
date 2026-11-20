@@ -1,0 +1,8 @@
+ZIP SHA256 9963fc57669289eedb3aafd48599a48e354942aeebf7fe0c4b91319f9713196e
+OK native ZIP extraction and 19 SHA256 entries
+OK package has no node_modules
+OK production ZIP: menu → intro → game, actual keyboard input, no browser errors
+OK disk leaderboard persists across server restart; descending order, invalid name and foreign origin rejected
+OK packaged run_cmd --export-leaderboard reads same disk data
+OK packaged headless: 600 ticks, clean stdout, terminal end record
+OK packaged soak: 10 nights, zero crashes, RSS <= 1.2x

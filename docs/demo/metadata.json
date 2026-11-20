@@ -1,0 +1,39 @@
+{
+  "duration_s": 91.418867,
+  "width": 1280,
+  "height": 720,
+  "bytes": 5581745,
+  "mime": "video/mp4;codecs=avc1.42001f",
+  "frames": 854,
+  "chapters": [
+    {
+      "at_s": 0.00023919999999998253,
+      "text": "v1.0.0 · Chơi trực tiếp bằng input bàn phím · Contract 1.3"
+    },
+    {
+      "at_s": 13.941024599999999,
+      "text": "Cài đặt lưu lại · Đổi phím · Bảng màu · Giảm chuyển động · Chữ lớn"
+    },
+    {
+      "at_s": 18.891760800000004,
+      "text": "Scenario kiểm chứng công khai: nạp 10 → đèn sáng → cạn dầu → thắp lại 5"
+    },
+    {
+      "at_s": 27.346306900000002,
+      "text": "Scenario bình minh: thắng 3 Đêm → nhập tên → ghi bảng điểm trên đĩa"
+    },
+    {
+      "at_s": 36.5500718,
+      "text": "Cảnh benchmark chuẩn · Đang quay nên số FPS trong video không dùng để chấm"
+    }
+  ],
+  "wall_s": 91.87700629999999,
+  "method": "Actual Chrome WebGL/DOM screenshots at ~10 fps → canvas MediaRecorder H.264 MP4. No generated gameplay frames. No microphone/audio track. Explicit core scenario fixtures are captioned. Benchmark figures come from separate visible unrecorded run.",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/157.0.8103.80",
+    "revision": "@5cb0fce6746acfc926045c45b23d811d479c49b9",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "jsVersion": "15.7.112.43"
+  }
+}

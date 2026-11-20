@@ -1,0 +1,18 @@
+{
+  "entries": [
+    {
+      "name": "Zip_High",
+      "score": 20,
+      "nights_won": 1,
+      "achieved_at": "2026-11-20T16:15:06.776Z",
+      "seed": 42
+    },
+    {
+      "name": "Zip_Low",
+      "score": 10,
+      "nights_won": 1,
+      "achieved_at": "2026-11-20T16:15:06.770Z",
+      "seed": 42
+    }
+  ]
+}

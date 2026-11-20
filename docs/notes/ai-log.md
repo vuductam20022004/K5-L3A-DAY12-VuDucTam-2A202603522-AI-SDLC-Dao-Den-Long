@@ -179,3 +179,48 @@ commit `7119666`. Tiếp tục dùng OpenAI Codex; không triển khai Phase 4.
 không phải số liệu hóa đơn). Tái dùng harness Node/Chrome, không thêm package,
 không dựng lại map/physics không bị thay luật. Kiểm tra các mốc tick và lượng
 dầu trước, sau đó ảnh thật giúp tìm lỗi bố cục mà unit test không thể thấy.
+
+## Phase 4 — Ticket-04: Bình minh, phát hành v1.0.0
+
+Baseline phase-3 tại6e22af6. Thêm contract1.3, benchmark/soak tách biệt gameplay,
+top10 lưu đĩa, accessibility, ZIP/demo/retro và workflowrelease. AGENTS/skill mới
+nêu đúng lệnh đo, giữ5đèn canonical và không push repo mẫu lớp.
+
+### Lỗi phát hiện và cách sửa
+
+| Vấn đề | Phát hiện | Xử lý |
+|---|---|---|
+| Bench ban đầu thay danh sách đèn bằng3đèn sáng, mất L4/L5 tắt nên wander đổi mục tiêu | Review scene với bản đồ chuẩn | Giữ đủ5đèn, thêm assertion, build và đo lại cửa sổ thật |
+| Nhiều mesh riêng làm cảnh200bóng tốn drawcall | Đo renderer và FPS thực | GPU instancing cùng sphere/eyes/halo/mote, áp dụng renderer thường khi đông; không đổi core gameplay |
+| Soak JIT lần đầu RSS1,203× vượt1,2 | RSS thực trước/sau reset | Lệnh công khai --jitless --expose-gc; interpreter và GC tại2mốc, không sửa số RSS |
+| Binding đã lưu có W và w lọt kiểm trùng | Unit case-normalized data | Normalize trước validation, dữ liệu sai về defaults |
+| UI nhỏ/chữ lớn che helper và cue cắt mép | Computedfontsize và ảnh thật1280×720 | Min18px/lớn×1.25, menu cuộn, wrapHUD, clampcue vào mép nhìn thấy |
+| GUI test sinh biểu thức x--số khi tọa độ âm | Runtime syntaxerror trong harness | Ngoặc số nội suy; chạy lại58check |
+| Demo chờ cả object Three.js gây Object reference chain too long | CDP Runtime.evaluate | Chỉ chờ boolean |
+| MP4 đã encode nhưng backgroundtab không nạp metadata | Timeoutmetadata; HTTPvideo decode thành công91,9s | Focus recorder trước validate; thêm validatorHTTP và5ảnh giải mã |
+| Sửa game khi đang quay làm Vite reload, mất nút continue | Harness null.click | Ổn định mã trước quay cuối; không sửa module game giữa lần quay |
+| npm start helper để lại servercon khi killnpm | Tiến trình helper chưa kết thúc | Dọn đúng câyPID helper; script mới killtreeWindows/processgroupPOSIX |
+| SaveScore trả lời sau rời màn hình có thể tham chiếuDOM đã xóa | Review asyncnavigation | Giữ node status của form, chỉ đánh dấu scoreSaved nếu còn cùng sim |
+
+### Kiểm chứng và giới hạn
+
+160test/12file đạt;23scenario,3Đêm tất định,24trace Phase3 cùngbyte.58GUIcheck
+bao gồm rebind/duplicate/reset/persist, minfontsize, motion, spawnarrows, điểm
+sau thua, reload, campaign. ZIP đã giải nén bằng công cụ native, kiểm19hash,
+chạy game/input thật, restartserver giữ điểm, export/headless/soak không module.
+Cài sạch chạy npmci/build/start thành công. npmci báo6advisory ở dependencytree
+baseline; không dùng auditfix--force để tự ý nâng major và không ghi đã sửa chúng.
+
+Benchmark cửa sổ thật sau sửa cảnh: avg155,4FPS, p1-low68,6, p95=10,2ms,
+load1291ms. Soak10Đêm không crash, RSS khoảng1,08×, filegốc vàrawdt được lưu.
+Không ghi số đo đang quay video thành benchmark chính. Hidden tests chưa có;
+nghe bằng tai và máy chấm chưa kiểm. MP4 có nhãn fixtures, không giả run tay trọn
+chiến dịch. Retro bảnHTML được kiểm đúng2trangA4 và không trànfooter.
+
+GitHub đích chưa xác định: origin là repo mẫu lớp. Đã hỏi URLrepo cá nhân và
+gợi ý plugin GitHub; chưa kết nối hoặc nhận URL. Hoàn thiện local artifact,
+release notes/workflow trước; không ghi "Release online" khi mới có taglocal.
+
+Ước tính Phase4 khoảng45–65k token; tổng4phase khoảng215–270k, không có hóa
+đơn/telemetry để khẳng định chi phí. Tiết kiệm bằng đọc có phạm vi, dùng lại
+harness, gom truy vấn độc lập và không inbase64ảnh/video vào ngữ cảnh.

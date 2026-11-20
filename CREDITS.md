@@ -5,6 +5,8 @@
 - Phase 1 và khung Phase 2: Cursor Agent / Claude Opus theo ghi chép ban đầu.
 - Hoàn thiện Phase 2, sửa logic, kiểm thử và tài liệu: OpenAI Codex theo Ticket-02 người dùng cung cấp.
 - Phase 3: OpenAI Codex triển khai Ticket-03, nhiên liệu/drain/bình minh, bảng màu, test và bằng chứng theo hướng dẫn người dùng.
+- Phase 4: OpenAI Codex triển khai Ticket-04, đo hiệu năng, bảng điểm, accessibility,
+  harness, đóng gói, tài liệu và video từ chương trình thật. Không dùng ImageGen.
 - Tac gia: Vu Duc Tam (2A202603522).
 
 ## Asset hinh anh / am thanh
@@ -14,6 +16,9 @@
 - Không dùng ảnh, nhân vật, thương hiệu hoặc mô hình của game/phim có sẵn.
 - Nhạc nền và toàn bộ SFX do mã Web Audio (`src/render/audio.ts`) tổng hợp bằng oscillator/envelope; không dùng sample bên ngoài.
 - Ảnh trong `docs/proof/` là ảnh chụp chương trình chạy thật, không phải asset nhập vào game.
+- `docs/demo/demo.mp4` quay WebGL/DOM thật bằng Chrome CDP và MediaRecorder H.264;
+  input bàn phím trực tiếp qua harness. Fixture kiểm chứng có nhãn trong video.
+  Video không có giọng đọc, nhạc/sample nhập ngoài hoặc cảnh do AI sinh.
 
 ## Thu vien
 
@@ -28,3 +33,6 @@
 ## Van ban ban giao
 
 - PRD-0, Ticket-02 và Test Contract v1.0/v1.1: yêu cầu của lab, do người dùng cung cấp; không sao chép nội dung board chưa phát hành.
+- Ticket-03/04 và Contract1.2/1.3 do người dùng cung cấp. Công cụ hỗ trợ: Node/npm,
+  Git/Git Bash, Chrome DevTools Protocol/MediaRecorder và OpenAI Codex. Bản ZIP
+  có LICENSE của Three.js trong THIRD_PARTY; license dự án MIT tại LICENSE.
