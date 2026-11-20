@@ -1,0 +1,21 @@
+
+ RUN  v2.1.9 D:/AI_Thuc_Chien/Lab/Lab20_11/K5-L3-LAB-Day12-AI-SDLC
+
+ ✓ tests/settings.test.ts (6 tests) 4ms
+ ✓ tests/architecture.test.ts (8 tests) 6ms
+ ✓ tests/contract.test.ts (6 tests) 8ms
+ ✓ tests/movement.test.ts (4 tests) 8ms
+ ✓ tests/gameplay.test.ts (6 tests) 8ms
+ ✓ tests/input.test.ts (5 tests) 7ms
+ ✓ tests/shades.test.ts (9 tests) 13ms
+ ✓ tests/maps.test.ts (9 tests) 21ms
+ ✓ tests/headless.test.ts (9 tests) 35ms
+ ✓ tests/phase3.test.ts (42 tests) 80ms
+ ✓ tests/phase2.test.ts (40 tests) 93ms
+
+ Test Files  11 passed (11)
+      Tests  144 passed (144)
+   Start at  17:23:35
+   Duration  1.02s (transform 647ms, setup 0ms, collect 1.74s, tests 283ms, environment 3ms, prepare 2.68s)
+
+JSON report written to D:/AI_Thuc_Chien/Lab/Lab20_11/K5-L3-LAB-Day12-AI-SDLC/docs/proof/phase-3/tests.json

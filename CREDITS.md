@@ -4,6 +4,7 @@
 
 - Phase 1 và khung Phase 2: Cursor Agent / Claude Opus theo ghi chép ban đầu.
 - Hoàn thiện Phase 2, sửa logic, kiểm thử và tài liệu: OpenAI Codex theo Ticket-02 người dùng cung cấp.
+- Phase 3: OpenAI Codex triển khai Ticket-03, nhiên liệu/drain/bình minh, bảng màu, test và bằng chứng theo hướng dẫn người dùng.
 - Tac gia: Vu Duc Tam (2A202603522).
 
 ## Asset hinh anh / am thanh

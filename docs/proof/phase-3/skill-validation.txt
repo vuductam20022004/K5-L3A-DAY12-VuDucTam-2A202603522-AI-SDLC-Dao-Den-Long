@@ -1,0 +1,2 @@
+Passed: skill frontmatter keys, name, description, no unfinished placeholders, referenced paths.
+Node fallback used; Python runtime was unavailable in the previous phase.

@@ -1,0 +1,45 @@
+{
+  "mode": "isolated Chrome headless; actual WebGL rendering, real wall-clock RAF",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "deviceScaleFactor": 1
+  },
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/157.0.8103.80",
+    "revision": "@5cb0fce6746acfc926045c45b23d811d479c49b9",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "jsVersion": "15.7.112.43"
+  },
+  "gpu": {
+    "vendor": "Google Inc. (Intel)",
+    "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A68) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+  },
+  "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+  "os": "win32 10.0.26200",
+  "runs": [
+    {
+      "night": 1,
+      "frames": 1148,
+      "milliseconds": 8012.900000000001,
+      "fps": 143.2689787717306,
+      "drawCalls": 51
+    },
+    {
+      "night": 2,
+      "frames": 1145,
+      "milliseconds": 8005.799999999999,
+      "fps": 143.02130955057584,
+      "drawCalls": 51
+    },
+    {
+      "night": 3,
+      "frames": 1145,
+      "milliseconds": 8012.700000000001,
+      "fps": 142.89814918816379,
+      "drawCalls": 98
+    }
+  ],
+  "caveat": "Headless measurement does not replace listening to audio and measuring a normal visible browser window."
+}

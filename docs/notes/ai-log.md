@@ -126,3 +126,56 @@ Hiệu quả nhất: test các mốc tick và quãng đường cụ thể trư�
 test xanh chưa đủ, ảnh và input trình duyệt phát hiện sai lệch camera/HUD.
 Nếu làm lại, giữ một baseline Phase 1 đã commit/tag trước khi sửa contract,
 và viết fixture theo từng hành vi để tránh kẻ địch làm nhiễu test hiệu ứng.
+
+## Phase 3 — Ticket-03: Đèn cạn dầu
+
+Nguồn: Ticket-03 người dùng cung cấp trực tiếp. Baseline: tag `phase-2`,
+commit `7119666`. Tiếp tục dùng OpenAI Codex; không triển khai Phase 4.
+
+### Quyết định và hồi quy
+
+- Viết ADR-003, assumptions và acceptance criteria trước khi sửa core.
+- Lưu fuel bằng số nguyên đơn vị1/60. Bước2 gom hao tự nhiên + tất cả drain,
+  xét out trước input nạp; chỉ làm tròn khi xuất, điểm dùng floor dầu thật.
+- Đổi sang thắng tại bình minh; no_flames ưu tiên cuối tick. Refuel, cost5
+  thắp lại, counter successful_lights/capacity, điểm mới đều nằm trong core.
+- Scenario/JSONL lênv1.2; parse và validate thêm các trường mới.
+- GUI đọc helper core cho cost, chọn đèn nhận và capacity; thêm fuel bar,
+  nhấp nháy1Hz, hình đèn xẹp/rách, bảng màu dễ phân biệt lưu localStorage.
+- 101 test cũ vẫn chạy, cập nhật kỳ vọng của đúng các luật ticket thay thế.
+  Thêm42 test core Phase3 và1 test settings; tổng144. Không dùng skip/todo.
+- Fixture nhiều đèn đặt cùng chỗ không còn phù hợp để test thắp tất cả:
+  đèn vừa sáng gần nhất có thể nhận dầu, nên E sẽ châm nó. Fixture mới kiểm
+  chứng deposit rồi refuel; các fixture dawn riêng kiểm chứng thắng/thua.
+
+### Lỗi phát hiện và sửa
+
+| Vấn đề | Bằng chứng phát hiện | Cách xử lý |
+|---|---|---|
+| Test "thắp tick cuối" đặt hai đèn sáng gần hơn đèn cần thắp | Test fail, event là refuel đúng luật mới | Dời hai đèn sáng ra xa; giữ assertion lựa chọn đèn, không sửa core cho khớp fixture sai |
+| Điểm bình minh có nguy cơ dùng fuel đã làm tròn100 thay dầu thật99.983 | Test floor(fuel) đòi597, không600 cho3 đèn | Tính floor trực tiếp từ fuelTicks/60 |
+| Drain bị generic counter coi như trạng thái có hạn | Review counter của Phase2 | Loại drain khỏi nhánh hết hạn, chỉ rời drain theo điều kiện ticket |
+| Thanh dầu lệch khỏi tâm khi xoay camera | Xem ảnh GUI thật | Dùng nền sprite ở tâm, mép trái fill theo trục phải camera; cập nhật camera trước sync |
+| Toast đè lời nhắc E | Ảnh lantern-out/relit | Nâng toast lên, chụp kiểm tra lại |
+| BOM khiến patch README đầu file không khớp | Tool từ chối trước khi sửa | Patch đúng BOM và lưu UTF-8; không đổi execution policy |
+
+### Kiểm chứng
+
+- `npm.cmd test` rồi Git Bash `scripts/verify.sh`: 144 test đạt, build GUI và
+  headless đạt;23 scenario có assertion, bao gồm drain/relight/refuel-safe/
+  out6000/capacity và ba kết thúc bình minh; ba Đêm byte-identical; input mới
+  sai trảexit2 và stdout sạch. Đêm3 chạy đủ18.000 gameplay tick dưới30 giây.
+- GUI:45 kiểm tra tự động tại1280×720 trong Chrome headless WebGL, lưu ảnh
+  và FPS/máy/GPU trong proof Phase3. Fixture đi qua core Scenario, có mô tả
+  rõ; không giả là đã chơi trọn một chiến dịch bằng tay.
+- Không có test ẩn để chạy; không khẳng định đã đạt chúng. Nghe âm thanh
+  bằng tai, FPS cửa sổ thường và Docker vẫn chưa kiểm thử.
+- Bằng chứng Phase1/2 giữ nguyên; changelog liệt kê breaking changes;
+  AGENTS và skill mới chỉ dẫn đúng Phase3.
+
+### Token / retro
+
+Ước tính vòng Phase3 khoảng30–45k token (ước tính nội dung đọc, code và tool;
+không phải số liệu hóa đơn). Tái dùng harness Node/Chrome, không thêm package,
+không dựng lại map/physics không bị thay luật. Kiểm tra các mốc tick và lượng
+dầu trước, sau đó ảnh thật giúp tìm lỗi bố cục mà unit test không thể thấy.

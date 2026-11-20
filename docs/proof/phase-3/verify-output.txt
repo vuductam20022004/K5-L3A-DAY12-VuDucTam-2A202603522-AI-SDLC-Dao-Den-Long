@@ -1,0 +1,44 @@
+== 1/7 typecheck ==
+OK
+== 2/7 unit tests and architecture ==
+ Test Files  11 passed (11)
+      Tests  144 passed (144)
+== 3/7 production web and headless build ==
+OK
+== 4/7 scenarios with behavioral assertions ==
+OK default: 600 ticks, state=playing, score=0
+OK lit: 300 ticks, state=playing, score=125
+OK shade: 60 ticks, state=playing, score=0
+OK pulse: 120 ticks, state=playing, score=5
+OK dash: 12 ticks, state=playing, score=0
+OK fall: 61 ticks, state=playing, score=0
+OK pause: 70 ticks, state=playing, score=0
+OK charm: 40 ticks, state=playing, score=0
+OK drifter: 122 ticks, state=playing, score=0
+OK spring: 86 ticks, state=playing, score=0
+OK tier-spring: 60 ticks, state=playing, score=0
+OK spawn: 780 ticks, state=playing, score=0
+OK wind: 2100 ticks, state=playing, score=0
+OK relight: 2 ticks, state=playing, score=65
+OK refuel-safe: 1 ticks, state=playing, score=5
+OK drain: 120 ticks, state=playing, score=0
+OK drain-pulse: 120 ticks, state=playing, score=15
+OK weak-target: 61 ticks, state=playing, score=0
+OK dawn-win: 2 ticks, state=won, score=537
+OK dawn-out: 2 ticks, state=lost, score=0
+OK dawn-hit: 2 ticks, state=lost, score=0
+OK capacity: 1 ticks, state=playing, score=65
+OK oil-expiry: 6001 ticks, state=playing, score=0
+== 5/7 byte determinism across all three nights ==
+OK night 1: byte-identical (80493 bytes)
+OK night 2: byte-identical (88369 bytes)
+OK night 3: byte-identical (108675 bytes)
+== 6/7 invalid inputs, scenario and CLI => exit 2 ==
+OK bad-inputs.json: exit 2, clean stdout
+OK bad-scenario.json: exit 2, clean stdout
+OK bad-json.json: exit 2, clean stdout
+OK bad-fuel.json: exit 2, clean stdout
+OK bad-counter.json: exit 2, clean stdout
+== 7/7 full night benchmark (18000 gameplay ticks, <=30 s) ==
+OK 18000 sim ticks: 0.124 s <= 30 s
+== verify passed ==

@@ -10,7 +10,7 @@ Game 3D "Đảo Đèn Lồng" (TypeScript + Three.js + Vite). Kiến trúc cốt
 - `src/core/**` — **logic game thuần TypeScript**. KHÔNG import `three`, KHÔNG dùng DOM, KHÔNG dùng `Math.random`.
   Đây là nơi duy nhất được phép chạy trong chế độ headless và là nguồn sự thật cho mọi test.
 - `src/render/**` + `src/main.ts` — GUI web (three.js). Chỉ đọc state từ `core`, không được quyết định luật game.
-- `src/headless.ts` — entrypoint headless theo Test Contract v1.1 (Ticket-02).
+- `src/headless.ts` — entrypoint headless theo Test Contract v1.2 (Ticket-03).
 - `game.contract.json` — **nguồn duy nhất** cho mọi con số tuning. `src/core/config.ts` import file này.
 
 ## Lệnh
@@ -24,7 +24,7 @@ npm run headless -- --seed 1 --night 1 --ticks 600 --out out.jsonl
 bash scripts/verify.sh # kiểm chứng đầy đủ (test + scenario + tất định)
 ```
 
-## Test Contract v1.1 — quy tắc bắt buộc (không được phá)
+## Test Contract v1.2 — quy tắc bắt buộc (không được phá)
 
 - 60 tick/giây cố định. 1 tick = 1/60 s. Không nhảy tick.
 - `time_left_s = night_duration_s - sim_tick / 60`; pause chỉ tăng `tick`.
@@ -45,9 +45,12 @@ bash scripts/verify.sh # kiểm chứng đầy đủ (test + scenario + tất đ
 Tên event chuẩn (dùng đúng, không đổi): `mote_picked`, `deposit`, `lantern_lit`, `pulse`,
 `player_hit`, `shade_spawned`, `game_over`.
 Event v1.1: `dash`, `charm_picked`, `drifter_steal`, `drifter_drop`, `night_start`, `paused`, `resumed`.
-Điểm +10 khi **nạp**, không khi nhặt. Pulse tốn 3 **đom đóm**, không trừ Ngọn Lửa.
+Điểm nạp **+5**, lần đầu **+100**, thắp lại **+40**. Pulse tốn 3 đom đóm; trúng drain thưởng tổng **15**, còn lại **5**.
+Fuel lưu nguyên đơn vị 1/60: bước 2 trừ hao + drain rồi xét tắt, trước tương tác; chỉ làm tròn khi xuất.
+Chỉ thắng ở bình minh với ≥ceil(0.6×n) đèn, reason `dawn_survived`; no_flames ưu tiên, không còn all_lit/thưởng thời gian.
+Capacity dẫn xuất từ successful_lights; renderer dùng helper core cho cost/chọn đèn, không tự đặt luật nạp.
 `game.contract.json.rules` chứa các hằng số gameplay phụ; bản đồ dùng chung geometry cho sim/render.
-Khi kiểm chứng Phase 2, đọc `skills/verify-phase2/SKILL.md`; không ghi đè bằng chứng Phase 1.
+Kiểm chứng hiện tại: `skills/verify-phase3/SKILL.md`; giữ nguyên tag/proof phase-2 và các phase trước.
 
 ## Cấm
 

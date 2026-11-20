@@ -3,6 +3,9 @@ name: verify-phase2
 description: Kiểm chứng và lưu bằng chứng Phase 2 của Đảo Đèn Lồng, gồm contract v1.1, scenario, tính tất định và hiệu năng; dùng khi sửa logic hoặc bàn giao Ticket-02.
 ---
 
+Quy trình lịch sử: dùng tại tag `phase-2`. Branch Phase 3 dùng
+`skills/verify-phase3/SKILL.md`, vì `npm run verify` hiện ghi proof Phase 3.
+
 Chạy từ gốc repo. Đọc `docs/spec/phase-2.md` và giả định Phase 2 khi cần đối
 chiếu hành vi. `npm run verify` chạy typecheck, test, build, assertion scenario,
 so byte ba đêm, exit code và benchmark 21.600 gameplay tick. Trên PowerShell
