@@ -5,11 +5,7 @@
   "motes": [],
   "shades": [],
   "lanterns": [
-    { "id": "L1", "pos": [0, 0, 1], "deposited": 9 },
-    { "id": "L2", "pos": [0, 0, 2], "deposited": 9 },
-    { "id": "L3", "pos": [1, 0, 1], "deposited": 9 },
-    { "id": "L4", "pos": [-1, 0, 1], "deposited": 9 },
-    { "id": "L5", "pos": [0, 0, 0.5], "deposited": 9 }
+    { "id": "L1", "pos": [0, 0, 1], "deposited": 9 }
   ],
   "time_left_s": 300
 }

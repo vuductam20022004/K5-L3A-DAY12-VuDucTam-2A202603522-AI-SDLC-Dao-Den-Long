@@ -2,16 +2,15 @@
  * Kiểu dữ liệu dùng chung cho toàn bộ game (core + render).
  * Core KHÔNG được import three/DOM.
  *
- * Phase 2 (contract v1.1): thêm trạng thái Bóng Mực chuẩn, Gió Lạc, Bùa Gió,
- * Gió mạnh, Lướt, tạm dừng.
+ * Contract v1.2: giữ physics/địch Phase 2; thêm dầu, drain, sức chứa tăng dần.
  */
 
 export type Vec3 = { x: number; y: number; z: number };
 
 export type GameState = 'playing' | 'won' | 'lost' | 'paused';
 
-/** Trạng thái Bóng Mực — tên chuẩn theo contract v1.1. */
-export type ShadeState = 'spawning' | 'wander' | 'chase' | 'recoil' | 'stunned';
+/** Trạng thái Bóng Mực — tên chuẩn theo contract v1.2. */
+export type ShadeState = 'spawning' | 'wander' | 'chase' | 'recoil' | 'stunned' | 'drain';
 
 /** Trạng thái Gió Lạc. */
 export type DrifterState = 'idle' | 'chase' | 'flee';
@@ -44,6 +43,10 @@ export interface Lantern {
   pos: Vec3;
   lit: boolean;
   deposited: number;
+  /** Integer units: 60 units = 1 fuel. Never round before gameplay decisions. */
+  fuelTicks: number;
+  everLit: boolean;
+  relitCount: number;
 }
 
 export interface Shade {
@@ -59,6 +62,8 @@ export interface Shade {
   pushDir: [number, number];
   pushTicksLeft: number;
   pushPerTick: number;
+  targetLanternId?: string;
+  drainTicks: number;
 }
 
 export interface Drifter {
@@ -91,6 +96,7 @@ export interface Player {
   flames: number;
   /** Số ánh sáng (dom đóm) đang mang. */
   carried: number;
+  successfulLights: number;
   /** Tick hết bất tử. */
   invulnUntilTick: number;
   /** Tick hết hồi chiêu lướt. */
@@ -124,7 +130,11 @@ export type EventName =
   | 'drifter_drop'
   | 'night_start'
   | 'paused'
-  | 'resumed';
+  | 'resumed'
+  | 'refuel'
+  | 'lantern_out'
+  | 'fuel_drain';
+// New events preserve existing event names and payloads where not replaced.
 
 export interface GameEvent {
   name: EventName;
@@ -145,6 +155,7 @@ export interface Snapshot {
     grounded: boolean;
     flames: number;
     carried: number;
+    capacity: number;
     invuln: number;
     dash_cd_s: number;
     pulse_cd_s: number;
@@ -155,6 +166,9 @@ export interface Snapshot {
     pos: [number, number, number];
     lit: boolean;
     deposited: number;
+    fuel: number;
+    ever_lit: boolean;
+    relit_count: number;
   }>;
   shades: Array<{
     id: string;

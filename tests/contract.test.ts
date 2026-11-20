@@ -3,8 +3,8 @@ import { parseInputs, parseScenario, InvalidInputError } from '../src/core/io';
 import { CONTRACT, TUNING } from '../src/core/config';
 
 describe('game.contract.json khop voi code', () => {
-  it('co contract_version 1.1 va team', () => {
-    expect(CONTRACT.contract_version).toBe('1.1');
+  it('co contract_version 1.2 va team', () => {
+    expect(CONTRACT.contract_version).toBe('1.2');
     expect(CONTRACT.team).toMatch(/\S+/);
   });
 
@@ -16,6 +16,7 @@ describe('game.contract.json khop voi code', () => {
       'pulse_push_m', 'pulse_cooldown_s', 'safe_radius', 'shade_speed',
       'shade_hit_radius', 'fall_enabled',
       'dash_speed', 'dash_duration_s', 'dash_cooldown_s', 'night2_duration_s', 'night3_duration_s',
+      'fuel_max', 'fuel_decay_per_s', 'fuel_per_mote', 'relight_cost', 'win_ratio', 'drain_per_s', 'low_fuel_threshold', 'capacity_max',
     ];
     for (const k of required) {
       expect(TUNING).toHaveProperty(k);
@@ -24,11 +25,14 @@ describe('game.contract.json khop voi code', () => {
     }
   });
 
-  it('score co day du 5 muc', () => {
+  it('score co day du cac muc v1.2, bo thuong thoi gian', () => {
     expect(TUNING.score).toHaveProperty('per_mote');
     expect(TUNING.score).toHaveProperty('per_lantern');
     expect(TUNING.score).toHaveProperty('per_stun');
-    expect(TUNING.score).toHaveProperty('per_second_left');
+    expect(TUNING.score).not.toHaveProperty('per_second_left');
+    expect(TUNING.score).toHaveProperty('per_relight');
+    expect(TUNING.score).toHaveProperty('per_drain_stun');
+    expect(TUNING.score).toHaveProperty('per_lit_at_dawn');
     expect(TUNING.score).toHaveProperty('per_flame_left');
   });
 });

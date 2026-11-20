@@ -1,5 +1,5 @@
 /**
- * Bộ chạy headless theo Test Contract v1.1.
+ * Bộ chạy headless theo Test Contract v1.2.
  * Tách khỏi CLI để test được bằng vitest.
  */
 

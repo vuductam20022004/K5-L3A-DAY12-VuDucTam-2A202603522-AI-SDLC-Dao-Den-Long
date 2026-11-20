@@ -1,8 +1,9 @@
 /**
- * Parse & validate scenario / inputs cho headless runner (contract v1.1).
+ * Parse & validate scenario / inputs cho headless runner (contract v1.2).
  * Mọi lỗi format đều ném `InvalidInputError` -> exit code 2.
  */
 import type { FrameInput } from './types';
+import { TUNING } from './config';
 
 export class InvalidInputError extends Error {
   constructor(message: string) {
@@ -16,13 +17,16 @@ export interface ScenarioLantern {
   pos: [number, number, number];
   deposited?: number;
   lit?: boolean;
+  fuel?: number;
+  ever_lit?: boolean;
 }
 
 export interface ScenarioShade {
   id?: string;
   pos: [number, number, number];
-  state?: 'spawning' | 'wander' | 'chase' | 'recoil' | 'stunned';
+  state?: 'spawning' | 'wander' | 'chase' | 'recoil' | 'stunned' | 'drain';
   state_ticks_left?: number;
+  target_lantern_id?: string;
 }
 
 export interface ScenarioDrifter {
@@ -52,6 +56,7 @@ export interface Scenario {
     dash_cd_ticks?: number;
     pulse_cd_ticks?: number;
     charm_ticks?: number;
+    successful_lights?: number;
   };
   lanterns?: ScenarioLantern[];
   motes?: Array<[number, number, number]>;
@@ -122,7 +127,7 @@ function asId(v: unknown, field: string): string {
   return v;
 }
 
-const SHADE_STATES = ['spawning', 'wander', 'chase', 'recoil', 'stunned'];
+const SHADE_STATES = ['spawning', 'wander', 'chase', 'recoil', 'stunned', 'drain'];
 const DRIFTER_STATES = ['idle', 'chase', 'flee'];
 
 export function parseScenario(raw: unknown): Scenario {
@@ -156,6 +161,7 @@ export function parseScenario(raw: unknown): Scenario {
     if (p.dash_cd_ticks !== undefined) pl.dash_cd_ticks = asInteger(p.dash_cd_ticks, 'scenario.player.dash_cd_ticks');
     if (p.pulse_cd_ticks !== undefined) pl.pulse_cd_ticks = asInteger(p.pulse_cd_ticks, 'scenario.player.pulse_cd_ticks');
     if (p.charm_ticks !== undefined) pl.charm_ticks = asInteger(p.charm_ticks, 'scenario.player.charm_ticks');
+    if (p.successful_lights !== undefined) pl.successful_lights = asInteger(p.successful_lights, 'scenario.player.successful_lights');
     sc.player = pl;
   }
 
@@ -167,6 +173,11 @@ export function parseScenario(raw: unknown): Scenario {
       const out: ScenarioLantern = { id: asId(l.id ?? `L${i + 1}`, `scenario.lanterns[${i}].id`), pos: asVec3(l.pos, `scenario.lanterns[${i}].pos`) };
       if (l.deposited !== undefined) out.deposited = asInteger(l.deposited, `scenario.lanterns[${i}].deposited`);
       if (l.lit !== undefined) out.lit = asBool(l.lit, `scenario.lanterns[${i}].lit`);
+      if (l.ever_lit !== undefined) out.ever_lit = asBool(l.ever_lit, `scenario.lanterns[${i}].ever_lit`);
+      if (l.fuel !== undefined) {
+        out.fuel = asNumber(l.fuel, `scenario.lanterns[${i}].fuel`);
+        if (out.fuel < 0 || out.fuel > TUNING.fuel_max) throw new InvalidInputError(`scenario.lanterns[${i}].fuel phải trong 0..${TUNING.fuel_max}`);
+      }
       return out;
     });
   }
@@ -183,6 +194,7 @@ export function parseScenario(raw: unknown): Scenario {
       if (!v || typeof v !== 'object') throw new InvalidInputError(`scenario.shades[${i}] phải là object`);
       const out: ScenarioShade = { pos: asVec3(v.pos, `scenario.shades[${i}].pos`) };
       if (v.id !== undefined) out.id = asId(v.id, `scenario.shades[${i}].id`);
+      if (v.target_lantern_id !== undefined) out.target_lantern_id = asId(v.target_lantern_id, `scenario.shades[${i}].target_lantern_id`);
       if (v.state !== undefined) {
         if (typeof v.state !== 'string' || !SHADE_STATES.includes(v.state)) {
           throw new InvalidInputError(

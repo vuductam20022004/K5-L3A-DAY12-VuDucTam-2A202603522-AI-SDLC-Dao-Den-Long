@@ -101,7 +101,7 @@ describe('thang / thua', () => {
     expect(sim.state).toBe('playing');
   });
 
-  it('thang khi tat ca 5 den da sang', () => {
+  it('tat ca 5 den sang van cho binh minh (Ticket-03)', () => {
     const sim = simWith({
       random_motes: false,
       random_shades: false,
@@ -116,9 +116,8 @@ describe('thang / thua', () => {
     });
     const events = sim.step(idle);
     const over = events.find((e) => e.name === 'game_over');
-    expect(over?.data['result']).toBe('won');
-    expect(over?.data['reason']).toBe('all_lit');
-    expect(sim.state).toBe('won');
+    expect(over).toBeUndefined();
+    expect(sim.state).toBe('playing');
   });
 
   it('thua khi het mau', () => {

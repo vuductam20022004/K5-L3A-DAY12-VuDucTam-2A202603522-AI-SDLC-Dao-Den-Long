@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Entry point headless theo Test Contract v1.1.
+ * Entry point headless theo Test Contract v1.2.
  *
  *   node dist/headless.js --seed <int> --night <1|2|3> [--scenario <file.json>]
  *                         [--inputs <file.json>] --ticks <int> --out <file.jsonl>

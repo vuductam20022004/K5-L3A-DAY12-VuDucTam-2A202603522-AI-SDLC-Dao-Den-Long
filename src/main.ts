@@ -1,4 +1,5 @@
-import { TICK_RATE, defaultFrame } from './core/sim';
+import { GameSim, TICK_RATE, defaultFrame } from './core/sim';
+import { parseScenario } from './core/io';
 import { Campaign } from './core/campaign';
 import { TUNING } from './core/config';
 import type { FrameInput, GameEvent } from './core/types';
@@ -15,6 +16,8 @@ const canvas = renderer.renderer.domElement;
 canvas.tabIndex = 0;
 const audio = new Audio();
 const settings = loadSettings(); audio.setVolume(settings.volume);
+renderer.setAccessiblePalette(settings.accessiblePalette);
+document.body.dataset.accessible = String(settings.accessiblePalette);
 let campaign = new Campaign(Date.now() % 100000);
 let sim = campaign.startNight();
 type Screen = 'menu' | 'intro' | 'playing' | 'pause' | 'settings' | 'result' | 'dawn';
@@ -41,7 +44,7 @@ function show(next: Screen): void {
   if (next !== 'playing') { clearInput(); releasePointer(); }
   const panel = $('panel');
   if (next === 'menu') {
-    panel.innerHTML = `<div class="eyebrow">BA HÒN ĐẢO · BA ĐÊM ÁNH SÁNG</div><h1>Đảo Đèn Lồng</h1>
+    panel.innerHTML = `<div class="eyebrow">GIỮ ĐẢO SÁNG TỚI BÌNH MINH</div><h1>Đảo Đèn Lồng</h1>
       <p class="lead">Một túi đom đóm. Một đốm lửa nhỏ.<br />Cùng Mây đưa ánh sáng trở về biển mây.</p>
       <div class="islands"><span>01 · Đảo Bến</span><span>02 · Đảo Cau</span><span>03 · Đảo Chuông</span></div>
       <button id="newGame">Bắt đầu hành trình <span>→</span></button><button id="menuSettings" class="secondary">Cài đặt</button>
@@ -53,7 +56,7 @@ function show(next: Screen): void {
       <p class="speaker">ÔNG ĐĂNG</p><p class="lead">${sim.map.og}</p>
       <div class="islands"><span>${sim.lanterns.length} đèn lồng</span><span>${sim.map.durationS / 60} phút</span><span>3 Ngọn Lửa</span></div>
       <button id="enterNight">Vào cuộc đêm →</button><button id="introMenu" class="secondary">Về menu</button>
-      <p class="controls">Mỗi đèn cần 10 đom đóm. Tỏa Sáng tốn 3 đom đóm.<br />Lướt qua khoảng trống, đi theo mũi tên để tìm đèn chưa sáng.</p>`;
+      <p class="controls">Giữ ít nhất ${sim.requiredLitCount}/${sim.lanterns.length} đèn sáng khi hết giờ. Đèn sáng đủ vẫn phải chờ bình minh.<br />Dầu chỉ đủ 100 giây: châm dầu bằng E. Thắp mới cần 10 đom đóm, thắp lại cần 5.<br />Dầu dưới 30 mất vùng an toàn. Tỏa Sáng đuổi bóng hút dầu!</p>`;
     button('enterNight', () => { void audio.unlock(); show('playing'); canvas.focus(); acc = 0; last = performance.now(); });
     button('introMenu', () => show('menu'));
   } else if (next === 'pause') {
@@ -68,22 +71,28 @@ function show(next: Screen): void {
     panel.innerHTML = `<div class="eyebrow">THEO CÁCH CỦA BẠN</div><h1>Cài đặt</h1>
       <label for="volume">Âm lượng <output id="volumeValue"></output></label><input id="volume" type="range" min="0" max="100" step="1" />
       <label for="sensitivity">Độ nhạy chuột <output id="sensitivityValue"></output></label><input id="sensitivity" type="range" min="1" max="12" step="0.5" />
+      <label class="toggle" for="accessiblePalette"><input id="accessiblePalette" type="checkbox" /> Bảng màu dễ phân biệt</label>
       <p class="controls">Tự động lưu trên trình duyệt này.</p><button id="settingsBack">Quay lại</button>`;
     const volume = $('volume') as HTMLInputElement, sensitivity = $('sensitivity') as HTMLInputElement;
+    const palette = $('accessiblePalette') as HTMLInputElement;
+    palette.checked = settings.accessiblePalette;
     volume.value = String(settings.volume * 100); sensitivity.value = String(settings.sensitivity * 1000);
     const update = () => {
       settings.volume = Number(volume.value) / 100; settings.sensitivity = Number(sensitivity.value) / 1000;
+      settings.accessiblePalette = palette.checked;
       $('volumeValue').textContent = `${Math.round(settings.volume * 100)}%`;
       $('sensitivityValue').textContent = `${(settings.sensitivity * 1000).toFixed(1)}`;
       audio.setVolume(settings.volume); saveSettings(settings);
+      renderer.setAccessiblePalette(settings.accessiblePalette);
+      document.body.dataset.accessible = String(settings.accessiblePalette);
     };
-    update(); volume.oninput = update; sensitivity.oninput = update;
+    update(); volume.oninput = update; sensitivity.oninput = update; palette.onchange = update;
     button('settingsBack', () => show(settingsReturn));
   } else if (next === 'result' || next === 'dawn') {
     const won = sim.state === 'won';
     panel.innerHTML = `<div class="eyebrow">${next === 'dawn' ? 'BA HÒN ĐẢO ĐÃ BỪNG SÁNG' : `ĐÊM ${sim.night} · ${sim.map.name}`}</div>
       <h1>${next === 'dawn' ? 'Bình Minh' : won ? 'Đảo đã sáng!' : 'Đêm chưa trọn'}</h1>
-      <p class="lead">${next === 'dawn' ? 'Tiếng chuông ngân qua biển mây. Mây đã đưa ánh sáng trở về.' : won ? 'Tất cả Đèn Lồng Lớn đã được thắp. Ông Đăng đang đợi bạn ở đảo tiếp theo.' : sim.player.flames <= 0 ? 'Ngọn Lửa đã tắt. Hãy thử lại và giữ ánh sáng bên mình.' : 'Bình minh đã tới khi vẫn còn đèn chưa sáng.'}</p>
+      <p class="lead">${next === 'dawn' ? 'Tiếng chuông ngân qua biển mây. Mây đã giữ được ánh sáng tới bình minh.' : won ? 'Bình minh đã tới, đảo vẫn sáng. Ông Đăng đang đợi bạn ở đảo tiếp theo.' : sim.player.flames <= 0 ? 'Ngọn Lửa đã tắt. Hãy thử lại và giữ ánh sáng bên mình.' : `Bình minh đã tới. Cần giữ ít nhất ${sim.requiredLitCount} đèn sáng để vượt Đêm này.`}</p>
       <div class="result-score">${next === 'dawn' ? campaign.totalScore : sim.score}<small>${next === 'dawn' ? 'TỔNG ĐIỂM' : 'ĐIỂM ĐÊM NÀY'}</small></div>
       <p class="controls">Đèn ${sim.lanterns.filter((l) => l.lit).length}/${sim.lanterns.length} · Tổng các đêm thắng: ${campaign.totalScore}</p>
       <button id="continueGame">${next === 'dawn' ? 'Một hành trình mới' : won ? 'Đêm kế tiếp →' : 'Chơi lại Đêm'}</button>
@@ -140,8 +149,10 @@ function onEvents(events: GameEvent[]): void {
       const lines = ['Một đốm lửa mở đường về bến.', 'Ánh sáng vẽ lại lối Mây đi.', 'Sương lùi, tiếng gió bỗng dịu hơn.',
         'Một ngọn đèn nữa, một lời hẹn về nhà.', 'Đèn soi bóng đảo giữa biển mây.', 'Qua nhịp cầu, ánh sáng nối liền hai bờ.', 'Tiếng chuông đón bình minh.'];
       const index = Number(String(ev.data.lantern_id).slice(1)) - 1;
-      toast(lines[index] ?? `Đèn ${ev.data.lantern_id} đã sáng!`);
+      toast(ev.data.relight ? `Đèn ${ev.data.lantern_id} sáng trở lại. Giữ ánh sáng tới bình minh!` : lines[index] ?? `Đèn ${ev.data.lantern_id} đã sáng!`);
     }
+    else if (ev.name === 'lantern_out') toast(`${settings.accessiblePalette ? '⚠ ' : ''}Đèn ${ev.data.lantern_id} đã tắt. Mang 5 đom đóm để thắp lại.`);
+    else if (ev.name === 'refuel') toast(`Đã châm dầu cho ${ev.data.lantern_id}: ${ev.data.fuel}/100`);
     else if (ev.name === 'charm_picked') toast('Bùa Gió · chạy nhanh, lướt không hồi chiêu trong 10 giây');
     else if (ev.name === 'drifter_steal') toast(`Gió Lạc cướp ${ev.data.amount} đom đóm! Tỏa Sáng để lấy lại.`);
     else if (ev.name === 'drifter_drop') toast('Gió Lạc đã thả lại đom đóm!');
@@ -157,28 +168,38 @@ function hud(): void {
   $('flames').textContent = '● '.repeat(Math.max(0, sim.player.flames)).trim();
   $('score').textContent = String(sim.score);
   $('lanternCount').textContent = `${sim.lanterns.filter((l) => l.lit).length}/${sim.lanterns.length}`;
+  $('goalLabel').textContent = `Giữ ≥${sim.requiredLitCount} đèn tới bình minh`;
   const time = Math.max(0, Math.ceil(sim.timeLeft()));
   $('time').textContent = `${Math.floor(time / 60)}:${String(time % 60).padStart(2, '0')}`;
   $('clock').classList.toggle('danger', time <= 30);
-  $('carryCount').textContent = `${sim.player.carried}/10`;
+  $('dangerMarker').hidden = !settings.accessiblePalette || time > 30;
+  $('carryCount').textContent = `${sim.player.carried}/${sim.capacity}`;
+  if ($('slots').children.length !== sim.capacity) {
+    $('slots').replaceChildren(...Array.from({ length: sim.capacity }, () => document.createElement('span')));
+  }
   Array.from($('slots').children).forEach((slot, i) => slot.classList.toggle('filled', i < sim.player.carried));
   const p = sim.snapshot().player;
   $('dashCd').textContent = p.dash_cd_s > 0 ? `${p.dash_cd_s.toFixed(1)}s` : 'Sẵn sàng';
   $('pulseCd').textContent = p.pulse_cd_s > 0 ? `${p.pulse_cd_s.toFixed(1)}s` : sim.player.carried < 3 ? 'Cần 3 đom đóm' : 'Sẵn sàng';
   $('charm').textContent = p.charm_s > 0 ? `Bùa Gió ${p.charm_s.toFixed(1)}s` : '';
+  const receiver = sim.nearestReceivableLantern(sim.player.pos);
+  const distance = receiver ? Math.hypot(receiver.pos.x - sim.player.pos.x, receiver.pos.z - sim.player.pos.z) : Infinity;
+  $('interactHint').hidden = !receiver || distance > TUNING.interact_radius || sim.player.deadUntilTick > 0 || screen !== 'playing';
+  $('interactHint').textContent = receiver?.lit ? `E — Châm dầu (${sim.fuel(receiver).toFixed(1)}/100)` :
+    `E — ${receiver?.everLit ? 'Thắp lại' : 'Nạp ánh sáng'} (${receiver?.deposited ?? 0}/${receiver ? sim.lanternCost(receiver) : 10})`;
+  const weak = sim.lanterns.filter((l) => l.lit && l.fuelTicks < TUNING.low_fuel_threshold * TICK_RATE).sort((a,b) => a.fuelTicks - b.fuelTicks || a.id.localeCompare(b.id))[0];
+  $('fuelStatus').textContent = weak ? `${settings.accessiblePalette ? '⚠ ' : ''}${weak.id} sắp hết dầu · ${sim.fuel(weak).toFixed(1)}/100` : 'Dầu ≥30 giữ vùng an toàn';
+  $('fuelStatus').classList.toggle('danger', !!weak);
   const lamp = sim.nearestUnlitLantern(sim.player.pos);
-  const distance = lamp ? Math.hypot(lamp.pos.x - sim.player.pos.x, lamp.pos.z - sim.player.pos.z) : Infinity;
-  $('interactHint').hidden = !lamp || distance > TUNING.interact_radius || sim.player.deadUntilTick > 0 || screen !== 'playing';
-  $('interactHint').textContent = `E — Nạp ánh sáng (${lamp?.deposited ?? 0}/10)`;
   const arrow = $('direction'); arrow.hidden = !lamp || screen !== 'playing';
   if (lamp) {
     const projected = renderer.project(lamp.pos);
     arrow.hidden = projected.visible || screen !== 'playing';
     const angle = Math.atan2(lamp.pos.x - sim.player.pos.x, lamp.pos.z - sim.player.pos.z) - camYaw;
     $('arrow').style.transform = `rotate(${-angle * 180 / Math.PI}deg)`;
-    $('target').textContent = `${lamp.id} · ${Math.round(distance)} m`;
+    $('target').textContent = `${lamp.id} · ${Math.round(Math.hypot(lamp.pos.x - sim.player.pos.x, lamp.pos.z - sim.player.pos.z))} m`;
   }
-  $('wind').textContent = sim.wind.active ? 'Gió mạnh!' : sim.wind.warnUntilTick > sim.simSteps ? 'Gió đang tới…' : '';
+  $('wind').textContent = sim.wind.active ? `${settings.accessiblePalette ? '⚠ ' : ''}Gió mạnh!` : sim.wind.warnUntilTick > sim.simSteps ? `${settings.accessiblePalette ? '⚠ ' : ''}Gió đang tới…` : '';
 }
 for (let i = 0; i < 10; i++) $('slots').appendChild(document.createElement('span'));
 function frame(now: number): void {
@@ -203,8 +224,9 @@ function frame(now: number): void {
     }
   } else acc = 0;
   if (toastLeft > 0) { toastLeft -= dt / 1000; if (toastLeft <= 0) $('toast').classList.remove('show'); }
+  renderer.updateCamera(sim.player.pos, camYaw, camPitch);
   renderer.sync(sim); renderer.animate(sim, sim.state === 'paused' ? 0 : Math.min(dt / 1000, 0.1));
-  renderer.updateCamera(sim.player.pos, camYaw, camPitch); renderer.render(); hud();
+  renderer.render(); hud();
   if (screen === 'playing') {
     metrics.frames++; metrics.milliseconds += dt;
     metrics.fps = metrics.frames * 1000 / metrics.milliseconds; metrics.drawCalls = renderer.renderer.info.render.calls;
@@ -217,5 +239,10 @@ Object.assign(window, { __game: {
   get screen() { return screen; }, get metrics() { return { ...metrics }; }, get settings() { return { ...settings }; },
   get audio() { return audio.diagnostics; },
   resetMetrics() { metrics.frames = metrics.milliseconds = metrics.fps = 0; },
+  loadScenario(scenario: unknown) {
+    if (!import.meta.env.DEV) return;
+    sim = new GameSim({ seed: 42, night: campaign.night, scenario: parseScenario(scenario) });
+    renderer.clearDynamic(); clearInput(); previousCountdown = 11; acc = 0;
+  },
   previewNight(night: number) { if (import.meta.env.DEV && [1, 2, 3].includes(night)) { campaign = new Campaign(42); campaign.night = night; prepareNight(); } },
 } });

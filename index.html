@@ -12,12 +12,12 @@
   <div id="flash" aria-hidden="true"></div>
   <header id="hud" hidden>
     <div class="vital"><span class="label">Ngọn Lửa</span><strong id="flames">● ● ●</strong><span id="nightLabel">Đêm 1 · Đảo Bến</span></div>
-    <div id="clock"><span class="label">Trước bình minh</span><strong id="time">5:00</strong><span id="wind"></span></div>
-    <div class="progress"><div><span class="label">Đèn lồng</span><strong id="lanternCount">0/5</strong></div><div><span class="label">Điểm</span><strong id="score">0</strong></div></div>
+    <div id="clock"><span class="label">Trước bình minh</span><span id="dangerMarker" hidden>⚠ </span><strong id="time">4:00</strong><span id="wind"></span></div>
+    <div class="progress"><div><span class="label" id="goalLabel">Giữ ≥3 đèn tới bình minh</span><strong id="lanternCount">0/5</strong></div><div><span class="label">Điểm</span><strong id="score">0</strong></div></div>
   </header>
   <div id="bottomHud" hidden>
     <div class="key-guide">WASD di chuyển · Chuột xoay<br />Space nhảy · Esc/P tạm dừng</div>
-    <div id="bag"><div id="interactHint" hidden>E — Nạp ánh sáng</div><div class="label">Đom đóm <b id="carryCount">0/10</b></div><div id="slots"></div><div id="charm"></div></div>
+    <div id="bag"><div id="interactHint" hidden>E — Nạp ánh sáng</div><div class="label">Đom đóm <b id="carryCount">0/10</b></div><div id="slots"></div><div id="charm"></div><div id="fuelStatus"></div></div>
     <div class="abilities"><div><kbd>Shift</kbd><span>Lướt<small id="dashCd">Sẵn sàng</small></span></div><div><kbd>Q</kbd><span>Tỏa Sáng<small id="pulseCd">Cần 3 đom đóm</small></span></div></div>
   </div>
   <div id="direction" hidden><span id="arrow">↑</span><span id="target"></span></div>

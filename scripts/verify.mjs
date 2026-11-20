@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env node
-/** Repeatable Phase 2 verification; never overwrites Phase 1 evidence. */
+/** Repeatable Phase 3 verification; never overwrites earlier phases' evidence. */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const PROOF = resolve(ROOT, 'docs/proof/phase-2');
+const PROOF = resolve(ROOT, 'docs/proof/phase-3');
 const ART = resolve(ROOT, 'artifacts');
 mkdirSync(PROOF, { recursive: true }); mkdirSync(ART, { recursive: true });
 const log = [];
@@ -26,6 +26,14 @@ function headless(args, name, { proof = true } = {}) {
   const objects = bytes.toString('utf8').trim().split('\n').map((l) => JSON.parse(l));
   assert.equal(objects[0].type, 'snapshot'); assert.equal(objects[0].tick, 0);
   assert.equal(objects.at(-1).type, 'end');
+  for (const snap of objects.filter((o) => o.type === 'snapshot')) {
+    assert(Number.isInteger(snap.player.capacity) && snap.player.capacity >= 10 && snap.player.capacity <= 20);
+    for (const lamp of snap.lanterns) {
+      assert.equal(typeof lamp.ever_lit, 'boolean'); assert(Number.isInteger(lamp.relit_count));
+      assert(lamp.fuel >= 0 && lamp.fuel <= 100 && Math.abs(lamp.fuel * 10 - Math.round(lamp.fuel * 10)) < 1e-8);
+      if (!lamp.lit) assert.equal(lamp.fuel, 0);
+    }
+  }
   return { objects, bytes, end: objects.at(-1), snaps: objects.filter((o) => o.type === 'snapshot'),
     events: objects.filter((o) => o.type === 'event') };
 }
@@ -43,7 +51,7 @@ function scenario(name, night, ticks, file, input, every = 1) {
 try {
   report('== 1/7 typecheck =='); run('node_modules/typescript/bin/tsc', ['--noEmit']); report('OK');
   report('== 2/7 unit tests and architecture ==');
-  const tests = run('node_modules/vitest/vitest.mjs', ['run', '--reporter=default', '--reporter=json', '--outputFile.json=docs/proof/phase-2/tests.json']);
+  const tests = run('node_modules/vitest/vitest.mjs', ['run', '--reporter=default', '--reporter=json', '--outputFile.json=docs/proof/phase-3/tests.json']);
   writeFileSync(resolve(PROOF, 'unit-tests.txt'), tests.replace(/\u001b\[[0-9;]*m/g, ''));
   report(tests.split('\n').filter((l) => /Test Files|Tests /.test(l)).join('\n'));
   report('== 3/7 production web and headless build ==');
@@ -53,8 +61,8 @@ try {
   const base = scenario('default', 1, 600, undefined, undefined, 60);
   assert.equal(base.snaps[0].motes_active, 20); assert.equal(base.snaps[0].lanterns.length, 5);
   const lit = scenario('lit', 1, 300, 'scenario-lit', 'inputs-lit', 10);
-  assert.equal(lit.end.state, 'won'); assert.equal(lit.events.filter((e) => e.name === 'lantern_lit').length, 5);
-  assert.equal(lit.end.score, 1298);
+  assert.equal(lit.end.state, 'playing'); assert.equal(lit.events.filter((e) => e.name === 'lantern_lit').length, 1);
+  assert.equal(lit.end.score, 125); assert.equal(lit.events.filter((e) => e.name === 'refuel').length, 4);
   const shade = scenario('shade', 1, 60, 'scenario-shade', undefined, 10);
   assert(shade.snaps.at(-1).shades[0].pos[0] < 8);
   const pulse = scenario('pulse', 1, 120, 'scenario-pulse', 'inputs-pulse', 15);
@@ -80,9 +88,32 @@ try {
   assert.deepEqual(spawn.events.filter((e) => e.name === 'shade_spawned').map((e) => e.tick), [300, 300, 780]);
   const wind = scenario('wind', 3, 2100, 'scenario-wind', undefined, 60);
   assert.equal(wind.snaps.find((s) => s.tick === 1800).wind.active, true); assert.equal(wind.snaps.at(-1).wind.active, false);
+  const relight = scenario('relight', 1, 2, 'phase3/scenario-relight', 'phase3/inputs-interact');
+  assert.deepEqual(relight.events.filter((e) => e.name !== 'night_start').map((e) => e.name), ['lantern_out','deposit','lantern_lit']);
+  assert.equal(event(relight, 'lantern_lit').data.relight, true); assert.equal(relight.end.score, 65);
+  const refuel = scenario('refuel-safe', 1, 1, 'phase3/scenario-refuel', 'phase3/inputs-interact');
+  assert.equal(event(refuel, 'refuel').data.fuel, 30); assert.equal(refuel.snaps.at(-1).shades[0].state, 'recoil');
+  assert.equal(refuel.snaps.at(-1).shades[0].pos[0], 6);
+  const drain = scenario('drain', 1, 120, 'phase3/scenario-drain', undefined, 60);
+  assert.equal(drain.snaps.at(-1).lanterns[0].fuel, 7);
+  assert.deepEqual(drain.events.filter((e) => e.name === 'fuel_drain').map((e) => [e.tick,e.data.shade_id,e.data.fuel]), [[60,'S1',18],[60,'S2',18],[120,'S1',7],[120,'S2',7]]);
+  const drainPulse = scenario('drain-pulse', 1, 120, 'phase3/scenario-drain-pulse', 'phase3/inputs-pulse', 15);
+  assert.equal(drainPulse.end.score, 15); assert.equal(drainPulse.snaps[1].shades[0].state, 'stunned');
+  const target = scenario('weak-target', 1, 61, 'phase3/scenario-weak-target', undefined, 1);
+  assert.equal(target.snaps[1].shades[0].state, 'drain'); assert.equal(event(target,'fuel_drain').tick, 61);
+  const dawn = scenario('dawn-win', 1, 2, 'phase3/scenario-dawn-win');
+  assert.equal(dawn.end.state,'won'); assert.equal(dawn.end.score,537); assert.equal(event(dawn,'game_over').data.reason,'dawn_survived');
+  const dawnOut = scenario('dawn-out', 1, 2, 'phase3/scenario-dawn-out');
+  assert.equal(dawnOut.end.state,'lost'); assert.equal(event(dawnOut,'game_over').data.reason,'dawn');
+  const dawnHit = scenario('dawn-hit', 1, 2, 'phase3/scenario-dawn-hit');
+  assert.equal(event(dawnHit,'game_over').data.reason,'no_flames'); assert.equal(dawnHit.end.score,0);
+  const capacity = scenario('capacity', 1, 1, 'phase3/scenario-capacity', 'phase3/inputs-interact');
+  assert.equal(capacity.snaps[0].player.capacity,18); assert.equal(capacity.snaps.at(-1).player.capacity,20);
+  const expiry = scenario('oil-expiry', 1, 6001, 'phase3/scenario-oil-expiry', undefined, 60);
+  assert.equal(event(expiry,'lantern_out').tick,6000); assert.equal(expiry.snaps.at(-1).lanterns[0].ever_lit,true);
   report('== 5/7 byte determinism across all three nights ==');
   for (const night of [1, 2, 3]) {
-    const args = ['--seed', '12345', '--night', String(night), '--ticks', '21600', '--snapshot-every', '600', '--scenario', 'tests/scenarios/scenario-benchmark.json'];
+    const args = ['--seed', '12345', '--night', String(night), '--ticks', '18000', '--snapshot-every', '600', '--scenario', 'tests/scenarios/scenario-benchmark.json'];
     const a = headless(args, `det-night${night}-a.jsonl`, { proof: false });
     const b = headless(args, `det-night${night}-b.jsonl`, { proof: false });
     assert(a.bytes.equals(b.bytes)); report(`OK night ${night}: byte-identical (${a.bytes.length} bytes)`);
@@ -92,6 +123,8 @@ try {
     ['--inputs', 'bad-inputs.json', { frames: [{ tick: 5 }, { tick: 3 }] }],
     ['--scenario', 'bad-scenario.json', { player: [] }],
     ['--scenario', 'bad-json.json', '{broken'],
+    ['--scenario', 'bad-fuel.json', {lanterns:[{id:'L1',pos:[0,0,0],fuel:101}]}],
+    ['--scenario', 'bad-counter.json', {player:{successful_lights:-1}}],
   ];
   for (const [flag, name, payload] of invalid) {
     const path = resolve(ART, name); writeFileSync(path, typeof payload === 'string' ? payload : JSON.stringify(payload));
@@ -100,13 +133,13 @@ try {
     catch (err) { caught = err; }
     assert.equal(caught?.status, 2); assert.equal(String(caught.stdout), ''); assert(String(caught.stderr).length > 0); report(`OK ${name}: exit 2, clean stdout`);
   }
-  report('== 7/7 full night benchmark (21600 gameplay ticks, <=30 s) ==');
+  report('== 7/7 full night benchmark (18000 gameplay ticks, <=30 s) ==');
   const start = performance.now();
-  const benchmark = headless(['--seed', '42', '--night', '3', '--ticks', '21600', '--snapshot-every', '600', '--scenario', 'tests/scenarios/scenario-benchmark.json'], 'run-benchmark.jsonl');
+  const benchmark = headless(['--seed', '42', '--night', '3', '--ticks', '18000', '--snapshot-every', '600', '--scenario', 'tests/scenarios/scenario-benchmark.json'], 'run-benchmark.jsonl');
   const seconds = (performance.now() - start) / 1000;
-  assert.equal(benchmark.end.ticks, 21600); assert.equal(benchmark.snaps.at(-1).sim_tick, 21600); assert(seconds <= 30);
-  const perf = { seconds, limitSeconds: 30, ticks: 21600, simTicks: 21600, node: process.version, os: `${platform()} ${release()}`, cpu: cpus()[0]?.model, cores: cpus().length, renderer: 'none (headless core)' };
+  assert.equal(benchmark.end.ticks, 18000); assert.equal(benchmark.snaps.at(-1).sim_tick, 18000); assert(seconds <= 30);
+  const perf = { seconds, limitSeconds: 30, ticks: 18000, simTicks: 18000, node: process.version, os: `${platform()} ${release()}`, cpu: cpus()[0]?.model, cores: cpus().length, renderer: 'none (headless core)' };
   writeFileSync(resolve(PROOF, 'performance-headless.json'), JSON.stringify(perf, null, 2) + '\n');
-  report(`OK 21600 sim ticks: ${seconds.toFixed(3)} s <= 30 s`);
+  report(`OK 18000 sim ticks: ${seconds.toFixed(3)} s <= 30 s`);
   report('== verify passed ==');
 } catch (err) { report(`FAIL: ${err.stack ?? err}`); process.exitCode = 1; }

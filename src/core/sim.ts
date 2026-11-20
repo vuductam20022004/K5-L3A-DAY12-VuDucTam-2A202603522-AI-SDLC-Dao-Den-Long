@@ -1,12 +1,12 @@
 /**
- * Core simulation của Đảo Đèn Lồng — contract v1.1 (TICKET-02).
+ * Core simulation của Đảo Đèn Lồng — contract v1.2 (TICKET-03).
  *
  * Thuần TypeScript: không DOM, không three, không Math.random.
  * Mô hình tick cố định 60 tick/giây.
  *
- * Thứ tự xử lý trong một tick (bắt buộc theo TICKET-02):
+ * Thứ tự xử lý trong một tick (TICKET-02, cập nhật TICKET-03):
  *   1. Đọc input (xử lý pause trước).
- *   2. Giảm các bộ đếm.
+ *   2. Trừ dầu tự hao + drain, tắt đèn cạn, giảm các bộ đếm.
  *   3. Di chuyển Mây, kiểm tra rơi khỏi đảo.
  *   4. Nhặt đom đóm và bùa.
  *   5. Tương tác với đèn.
@@ -96,6 +96,7 @@ export class GameSim {
     grounded: true,
     flames: 0,
     carried: 0,
+    successfulLights: 0,
     invulnUntilTick: -1,
     dashCdUntilTick: -1,
     pulseCdUntilTick: -1,
@@ -147,6 +148,7 @@ export class GameSim {
 
     this.player.flames = sc.player?.flames ?? this.tuning.flames;
     this.player.carried = sc.player?.carried ?? 0;
+    this.player.successfulLights = sc.player?.successful_lights ?? 0;
     this.player.facing = [0, 1];
     if (sc.player?.pos) {
       this.player.pos = { x: sc.player.pos[0], y: sc.player.pos[1], z: sc.player.pos[2] };
@@ -182,7 +184,7 @@ export class GameSim {
   private buildLanterns(sc: Scenario): void {
     const byId = new Map<string, Lantern>();
     for (const l of this.map.lanterns) {
-      byId.set(l.id, { id: l.id, pos: { ...l.pos }, lit: false, deposited: 0 });
+      byId.set(l.id, { id: l.id, pos: { ...l.pos }, lit: false, deposited: 0, fuelTicks: 0, everLit: false, relitCount: 0 });
     }
     for (const sl of sc.lanterns ?? []) {
       const existing = byId.get(sl.id);
@@ -191,11 +193,14 @@ export class GameSim {
         pos: { x: sl.pos[0], y: sl.pos[1], z: sl.pos[2] },
         lit: false,
         deposited: 0,
+        fuelTicks: 0, everLit: false, relitCount: 0,
       };
       lantern.pos = { x: sl.pos[0], y: sl.pos[1], z: sl.pos[2] };
       lantern.deposited = sl.deposited ?? 0;
       // `lit: true` trong scenario không phát sự kiện và không cộng điểm.
       lantern.lit = sl.lit ?? false;
+      lantern.fuelTicks = lantern.lit ? Math.round((sl.fuel ?? this.tuning.fuel_max) * TICK_RATE) : 0;
+      lantern.everLit = lantern.lit || (sl.ever_lit ?? false);
       byId.set(sl.id, lantern);
     }
     this.lanterns = [...byId.values()];
@@ -253,6 +258,8 @@ export class GameSim {
           pushDir: [1, 0],
           pushTicksLeft: 0,
           pushPerTick: 0,
+          targetLanternId: s.target_lantern_id,
+          drainTicks: 0,
         };
       });
       this.nextShadeId = this.shades.length + 1;
@@ -315,6 +322,32 @@ export class GameSim {
     return this.lanterns.reduce((n, l) => n + (l.lit ? 1 : 0), 0);
   }
 
+  get capacity(): number {
+    return Math.min(this.tuning.capacity_max, this.tuning.carry_capacity + RULES.capacity_per_light * this.player.successfulLights);
+  }
+
+  get requiredLitCount(): number { return Math.ceil(this.tuning.win_ratio * this.lanterns.length); }
+
+  lanternCost(lantern: Lantern): number { return lantern.everLit ? this.tuning.relight_cost : this.tuning.lantern_cost; }
+
+  fuel(lantern: Lantern): number { return Math.round(lantern.fuelTicks / TICK_RATE * 10) / 10; }
+
+  nearestReceivableLantern(pos: Vec3): Lantern | null {
+    return this.nearestLantern(pos, (l) => !l.lit || l.fuelTicks < this.tuning.fuel_max * TICK_RATE);
+  }
+
+  private nearestLantern(pos: Vec3, eligible: (l: Lantern) => boolean): Lantern | null {
+    let best: Lantern | null = null, distance = Infinity;
+    for (const lamp of this.lanterns) {
+      if (!eligible(lamp)) continue;
+      const d = distXZ(pos, lamp.pos);
+      if (d < distance - 1e-9 || (Math.abs(d - distance) < 1e-9 && (!best || lamp.id < best.id))) {
+        best = lamp; distance = d;
+      }
+    }
+    return best;
+  }
+
   /** Đèn chưa sáng gần nhất (bằng nhau thì id nhỏ hơn). */
   nearestUnlitLantern(pos: Vec3): Lantern | null {
     let best: Lantern | null = null;
@@ -333,7 +366,7 @@ export class GameSim {
   /** Vùng an toàn: có đèn sáng nào trong bán kính không. */
   inSafeZone(pos: Vec3): boolean {
     for (const l of this.lanterns) {
-      if (!l.lit) continue;
+      if (!l.lit || l.fuelTicks < this.tuning.low_fuel_threshold * TICK_RATE) continue;
       if (distXZ(pos, l.pos) < this.tuning.safe_radius - 1e-9) return true;
     }
     return false;
@@ -342,7 +375,7 @@ export class GameSim {
   /** Đẩy vị trí ra khỏi vùng an toàn (nếu đang ở trong). */
   private pushOutOfSafeZone(pos: Vec3): Vec3 {
     for (const l of this.lanterns) {
-      if (!l.lit) continue;
+      if (!l.lit || l.fuelTicks < this.tuning.low_fuel_threshold * TICK_RATE) continue;
       const d = distXZ(pos, l.pos);
       if (d < this.tuning.safe_radius) {
         const nx = d > 1e-6 ? (pos.x - l.pos.x) / d : 1;
@@ -443,7 +476,29 @@ export class GameSim {
     return this.pendingEvents;
   }
 
+  /** Step 2: aggregate all drains before extinction and before player actions. */
+  private updateFuel(): void {
+    const draining = [...this.shades].filter((s) => s.state === 'drain').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    for (const lamp of this.lanterns) {
+      if (!lamp.lit) continue;
+      const contributors = draining.filter((s) => s.targetLanternId === lamp.id &&
+        lamp.fuelTicks < this.tuning.low_fuel_threshold * TICK_RATE && distXZ(s.pos, lamp.pos) <= RULES.drain_radius);
+      lamp.fuelTicks = Math.max(0, lamp.fuelTicks - this.tuning.fuel_decay_per_s - contributors.length * this.tuning.drain_per_s);
+      for (const shade of contributors) {
+        shade.drainTicks += 1;
+        if (shade.drainTicks % TICK_RATE === 0) {
+          this.pendingEvents.push({ name: 'fuel_drain', data: { lantern_id: lamp.id, shade_id: shade.id, fuel: this.fuel(lamp) } });
+        }
+      }
+      if (lamp.fuelTicks <= 0) {
+        lamp.lit = false; lamp.deposited = 0;
+        this.pendingEvents.push({ name: 'lantern_out', data: { lantern_id: lamp.id } });
+      }
+    }
+  }
+
   private updateCounters(tick: number): void {
+    this.updateFuel();
     // TTL đom đóm rơi.
     for (const m of this.motes) {
       if (m.ttlTicks > 0) {
@@ -456,7 +511,7 @@ export class GameSim {
     for (const s of this.shades) {
       if (s.stateTicksLeft > 0) {
         s.stateTicksLeft -= 1;
-        if (s.stateTicksLeft === 0 && s.state !== 'chase' && s.state !== 'wander') {
+        if (s.stateTicksLeft === 0 && s.state !== 'chase' && s.state !== 'wander' && s.state !== 'drain') {
           s.state = 'wander';
           s.pushTicksLeft = 0;
         }
@@ -677,7 +732,7 @@ export class GameSim {
 
   private pickupMotes(): void {
     const p = this.player;
-    if (p.carried >= this.tuning.carry_capacity) return;
+    if (p.carried >= this.capacity) return;
     for (const m of this.motes) {
       if (!m.active) continue;
       if (m.ttlTicks === 0) {
@@ -690,7 +745,7 @@ export class GameSim {
       m.active = false;
       p.carried += 1;
       this.pendingEvents.push({ name: 'mote_picked', data: { carried: p.carried } });
-      if (p.carried >= this.tuning.carry_capacity) break;
+      if (p.carried >= this.capacity) break;
     }
   }
 
@@ -714,11 +769,22 @@ export class GameSim {
   private doInteract(): void {
     const p = this.player;
     if (p.carried <= 0) return;
-    const target = this.nearestUnlitLantern(p.pos);
+    const target = this.nearestReceivableLantern(p.pos);
     if (!target) return;
     if (distXZ(p.pos, target.pos) > this.tuning.interact_radius) return;
 
-    const amount = Math.min(p.carried, this.tuning.lantern_cost - target.deposited);
+    if (target.lit) {
+      const max = this.tuning.fuel_max * TICK_RATE;
+      const amount = Math.min(p.carried, Math.ceil((max - target.fuelTicks) / (this.tuning.fuel_per_mote * TICK_RATE)));
+      if (amount <= 0) return;
+      p.carried -= amount;
+      target.fuelTicks = Math.min(max, target.fuelTicks + amount * this.tuning.fuel_per_mote * TICK_RATE);
+      this.score += amount * this.tuning.score.per_mote;
+      this.pendingEvents.push({ name: 'refuel', data: { lantern_id: target.id, amount, fuel: this.fuel(target) } });
+      return;
+    }
+
+    const amount = Math.min(p.carried, this.lanternCost(target) - target.deposited);
     if (amount <= 0) return;
     p.carried -= amount;
     target.deposited += amount;
@@ -727,22 +793,28 @@ export class GameSim {
       name: 'deposit',
       data: { lantern_id: target.id, amount, deposited: target.deposited },
     });
-    if (target.deposited >= this.tuning.lantern_cost && !target.lit) {
+    if (target.deposited >= this.lanternCost(target) && !target.lit) {
+      const relight = target.everLit;
       target.lit = true;
-      this.score += this.tuning.score.per_lantern;
-      this.pendingEvents.push({ name: 'lantern_lit', data: { lantern_id: target.id } });
+      target.fuelTicks = this.tuning.fuel_max * TICK_RATE;
+      target.everLit = true;
+      if (relight) target.relitCount += 1;
+      p.successfulLights += 1;
+      this.score += relight ? this.tuning.score.per_relight : this.tuning.score.per_lantern;
+      this.pendingEvents.push({ name: 'lantern_lit', data: { lantern_id: target.id, relight } });
     }
   }
 
   private updateSafeZone(): void {
     for (const s of this.shades) {
-      if (s.state !== 'chase' && s.state !== 'wander') continue;
+      if (s.state !== 'chase' && s.state !== 'wander' && s.state !== 'drain') continue;
       if (!this.inSafeZone(s.pos)) continue;
       // Bóng đang ở trong lúc đèn vừa thắp bị đẩy ra mép trong tối đa 30 tick
       // và không gây sát thương trong lúc đó.
       s.state = 'recoil';
       s.stateTicksLeft = RULES.safe_push_max_ticks;
       s.pushTicksLeft = 0;
+      s.drainTicks = 0;
       s.pos = this.pushOutOfSafeZone(s.pos);
     }
   }
@@ -761,7 +833,9 @@ export class GameSim {
     for (const s of this.shades) {
       if (s.state === 'spawning') continue;
       if (dist3(centre, s.pos) > this.tuning.pulse_radius) continue;
+      const draining = s.state === 'drain';
       s.state = 'stunned';
+      s.drainTicks = 0;
       s.stateTicksLeft = Math.round(this.tuning.pulse_stun_s * TICK_RATE);
       s.stunUntilTick = this.simSteps + s.stateTicksLeft;
       const d = distXZ(p.pos, s.pos);
@@ -769,7 +843,7 @@ export class GameSim {
       s.pushTicksLeft = RULES.pulse_push_ticks;
       s.pushPerTick = this.tuning.pulse_push_m / RULES.pulse_push_ticks;
       stunned.push(s.id);
-      this.score += this.tuning.score.per_stun;
+      this.score += draining ? this.tuning.score.per_drain_stun : this.tuning.score.per_stun;
     }
     // Gió Lạc đang chase bị trúng -> flee không cướp.
     for (const d of this.drifters) {
@@ -803,10 +877,23 @@ export class GameSim {
         case 'spawning':
           break;
         case 'wander': {
+          s.drainTicks = 0;
           const d = distXZ(p.pos, s.pos);
           if (d <= RULES.shadeDetectRadius) {
             s.state = 'chase';
           } else {
+            const weak = this.nearestLantern(s.pos, (l) => l.lit && l.fuelTicks < this.tuning.low_fuel_threshold * TICK_RATE);
+            const target = weak ?? this.nearestUnlitLantern(s.pos);
+            s.targetLanternId = target?.id;
+            if (target) {
+              const distance = distXZ(s.pos, target.pos);
+              if (weak && distance <= RULES.drain_radius) { s.state = 'drain'; break; }
+              const delta = Math.min(this.map.shadeSpeed * DT, distance);
+              if (distance > 1e-9) this.moveShade(s, { x: s.pos.x + (target.pos.x - s.pos.x) / distance * delta,
+                y: s.pos.y, z: s.pos.z + (target.pos.z - s.pos.z) / distance * delta });
+              if (weak && distXZ(s.pos, weak.pos) <= RULES.drain_radius) s.state = 'drain';
+              break;
+            }
             // Đi lang, đổi hướng thỉnh thoảng.
             if (tick % RULES.shade_wander_turn_ticks === 0) s.wanderDir = this.randomUnit();
             const step = this.map.shadeSpeed * RULES.shade_wander_speed_ratio * DT;
@@ -818,6 +905,15 @@ export class GameSim {
             if (!this.moveShade(s, next)) {
               s.wanderDir = this.randomUnit();
             }
+          }
+          break;
+        }
+        case 'drain': {
+          const lamp = this.lanterns.find((l) => l.id === s.targetLanternId);
+          if (!lamp?.lit || lamp.fuelTicks >= this.tuning.low_fuel_threshold * TICK_RATE || distXZ(s.pos, lamp.pos) > RULES.drain_radius) {
+            s.state = 'wander'; s.drainTicks = 0; s.targetLanternId = undefined;
+          } else if (distXZ(s.pos, p.pos) <= RULES.drain_alert_radius) {
+            s.state = 'chase'; s.drainTicks = 0;
           }
           break;
         }
@@ -1037,6 +1133,7 @@ export class GameSim {
       stunUntilTick: -1,
       wanderDir: this.randomUnit(),
       pushDir: [1, 0], pushTicksLeft: 0, pushPerTick: 0,
+      drainTicks: 0,
     });
     this.pendingEvents.push({ name: 'shade_spawned', data: { id } });
     return true;
@@ -1066,19 +1163,18 @@ export class GameSim {
       this.finish('lost', 'no_flames');
       return;
     }
-    if (this.lanterns.length > 0 && this.litCount() === this.lanterns.length) {
-      this.finish('won', 'all_lit');
-      return;
-    }
     if (this.timeLeft() <= 0) {
-      this.finish('lost', 'dawn');
+      const won = this.lanterns.length > 0 && this.litCount() >= this.requiredLitCount;
+      this.finish(won ? 'won' : 'lost', won ? 'dawn_survived' : 'dawn');
     }
   }
 
   private finish(result: 'won' | 'lost', reason: string): void {
     this.state = result;
     if (result === 'won') {
-      this.score += Math.floor(this.timeLeft()) * this.tuning.score.per_second_left;
+      for (const lamp of this.lanterns) {
+        if (lamp.lit) this.score += this.tuning.score.per_lit_at_dawn + Math.floor(lamp.fuelTicks / TICK_RATE);
+      }
       this.score += Math.max(0, this.player.flames) * this.tuning.score.per_flame_left;
     }
     this.pendingEvents.push({ name: 'game_over', data: { result, reason } });
@@ -1106,6 +1202,7 @@ export class GameSim {
         grounded: this.player.grounded,
         flames: this.player.flames,
         carried: this.player.carried,
+        capacity: this.capacity,
         invuln: round3(Math.max(0, (this.player.invulnUntilTick - this.simSteps) / TICK_RATE)),
         dash_cd_s: round3(Math.max(0, (this.player.dashCdUntilTick - this.simSteps) / TICK_RATE)),
         pulse_cd_s: round3(Math.max(0, (this.player.pulseCdUntilTick - this.simSteps) / TICK_RATE)),
@@ -1116,6 +1213,9 @@ export class GameSim {
         pos: [round3(l.pos.x), round3(l.pos.y), round3(l.pos.z)] as [number, number, number],
         lit: l.lit,
         deposited: l.deposited,
+        fuel: l.lit ? this.fuel(l) : 0,
+        ever_lit: l.everLit,
+        relit_count: l.relitCount,
       })),
       shades: this.shades.map((s) => ({
         id: s.id,

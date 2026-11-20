@@ -11,7 +11,7 @@ import { cpus, platform, release } from 'node:os';
 import assert from 'node:assert/strict';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const PROOF = resolve(ROOT, 'docs/proof/phase-2');
+const PROOF = resolve(ROOT, 'docs/proof/phase-3');
 const ART = resolve(ROOT, 'artifacts');
 mkdirSync(join(PROOF, 'screenshots'), { recursive: true }); mkdirSync(ART, { recursive: true });
 const chrome = process.env.CHROME_PATH ?? [
@@ -127,6 +127,19 @@ try {
   await shot('settings'); await click('settingsBack'); await click('resume');
   await waitFor('__game.screen === "playing"');
   check('resume returns to gameplay', await evaluate('__game.sim.state === "playing"'));
+  await evaluate(`__game.loadScenario({random_motes:false,random_shades:false,random_drifters:false,time_left_s:20,lanterns:[{id:'L1',pos:[0,0,1],lit:true,fuel:20}],shades:[{id:'S1',pos:[3,0.8,0],state:'stunned',state_ticks_left:9999}]})`);
+  await delay(100);
+  check('normal palette has purple shade outline and eyes', await evaluate(`__game.renderer.scene.getObjectByName('outline').material.color.getHexString() === '7a3cff' && __game.renderer.scene.getObjectByName('eyes').children.every(e => e.material.color.getHexString() === '7a3cff')`));
+  check('lit lantern exposes a fuel bar and full paper shape', await evaluate(`__game.renderer.scene.getObjectByName('fuelFill').visible && __game.renderer.scene.getObjectByName('paper').scale.y === 1`));
+  await waitFor(`__game.renderer.scene.getObjectByName('fuelFill').material.opacity === 0.3`);
+  await shot('low-fuel-blink');
+  await key('p','KeyP'); await waitFor('__game.screen === "pause"'); await click('pauseSettings');
+  await evaluate(`document.getElementById('accessiblePalette').checked = true; document.getElementById('accessiblePalette').dispatchEvent(new Event('change'));`);
+  check('accessible palette toggle is persisted', await evaluate('__game.settings.accessiblePalette === true'));
+  await shot('accessible-settings'); await click('settingsBack'); await click('resume'); await waitFor('__game.screen === "playing"');
+  check('accessible shade outline and eyes use exact cyan', await evaluate(`__game.renderer.scene.getObjectByName('outline').material.color.getHexString() === '00b3ff' && __game.renderer.scene.getObjectByName('eyes').children.every(e => e.material.color.getHexString() === '00b3ff')`));
+  check('accessible danger UI is white with a warning symbol', await evaluate(`getComputedStyle(document.getElementById('clock')).color === 'rgb(255, 255, 255)' && !document.getElementById('dangerMarker').hidden && document.getElementById('fuelStatus').textContent.includes('⚠')`));
+  await shot('accessible-low-fuel');
   const audio = await evaluate('__game.audio');
   check('Web Audio unlocked and SFX were dispatched', audio.state === 'running' && audio.sounds.jump > 0 && audio.sounds.pulse > 0 && audio.sounds.dash > 0);
   await evaluate('__game.sim.player.flames = 0'); await waitFor('__game.screen === "result"');
@@ -134,18 +147,30 @@ try {
   await click('continueGame'); await waitFor('__game.screen === "intro"');
   check('retry keeps the same night and restores three flames', await evaluate('__game.sim.night === 1 && __game.sim.player.flames === 3 && __game.sim.simSteps === 0'));
   await click('enterNight'); await waitFor('__game.screen === "playing"');
-  await evaluate('__game.sim.simSteps = 16201'); await delay(100);
+  await evaluate('__game.sim.simSteps = (__game.sim.map.durationS - 29) * 60 + 1'); await delay(100);
   check('last thirty seconds turn the clock red', await evaluate('document.getElementById("clock").classList.contains("danger")'));
-  await evaluate('__game.sim.simSteps = 17401'); await delay(100);
+  await evaluate('__game.sim.simSteps = (__game.sim.map.durationS - 10) * 60 + 1'); await delay(100);
   check('final ten seconds emit countdown sound', await evaluate('__game.audio.sounds.countdown > 0'));
   await evaluate('__game.sim.player.pos = {...__game.sim.lanterns[0].pos}; __game.sim.player.carried = 10');
   await delay(100);
   check('nearby lamp exposes E deposit hint', await evaluate('!document.getElementById("interactHint").hidden'));
   await key('e', 'KeyE');
-  check('E lights a lamp, scores deposit and raises ambient light', await evaluate('__game.sim.lanterns[0].lit && __game.sim.score === 200 && Math.abs(__game.renderer.ambient.intensity - 0.26) < 0.001'));
+  check('E lights a lamp, scores 150 and raises ambient light', await evaluate('__game.sim.lanterns[0].lit && __game.sim.score === 150 && Math.abs(__game.renderer.ambient.intensity - 0.26) < 0.001'));
+  check('successful lighting grows the HUD to twelve carry slots', await evaluate('document.getElementById("slots").children.length === 12 && document.getElementById("carryCount").textContent === "0/12"'));
   await shot('lamp-lit');
+  await evaluate('__game.sim.lanterns[0].fuelTicks = 1200; __game.sim.player.carried = 2'); await delay(100);
+  check('E prompt switches to refuel for a lit lamp', await evaluate('document.getElementById("interactHint").textContent.includes("Châm dầu")'));
+  await key('e','KeyE');
+  check('refuel spends motes and awards five points each', await evaluate('__game.sim.player.carried === 0 && __game.sim.score === 160'));
+  await evaluate('__game.sim.lanterns[0].fuelTicks = 1'); await delay(100);
+  check('extinguished lantern is collapsed and torn with no fuel bar', await evaluate(`!__game.sim.lanterns[0].lit && __game.renderer.scene.getObjectByName('paper').scale.y === 0.8 && __game.renderer.scene.getObjectByName('tear').visible && !__game.renderer.scene.getObjectByName('fuelFill').visible`));
+  await shot('lantern-out');
+  await evaluate('__game.sim.player.carried = 5'); await key('e','KeyE');
+  check('relight costs five, adds forty and grows capacity again', await evaluate('__game.sim.lanterns[0].lit && __game.sim.score === 225 && __game.sim.capacity === 14'));
+  await shot('lantern-relit');
   await send('Page.reload'); await waitFor('window.__game?.screen === "menu"');
   check('settings survive page reload', await evaluate('__game.settings.volume === 0.37 && __game.settings.sensitivity === 0.0065'));
+  check('accessible palette survives page reload', await evaluate('__game.settings.accessiblePalette === true && document.body.dataset.accessible === "true"'));
   await click('newGame'); await click('enterNight'); await waitFor('__game.screen === "playing"');
   const performanceRuns = [];
   for (const night of [1, 2, 3]) {
@@ -165,8 +190,11 @@ try {
       await shot('wind-warning'); await delay(500);
       check('wind warning becomes an active gust', await evaluate('__game.sim.wind.active && document.getElementById("wind").textContent.includes("mạnh")'));
     }
-    // Finish through the core's normal tick/game_over event using a documented fixture.
-    await evaluate('__game.sim.lanterns.forEach(l => l.lit = true)');
+    // Explicit time/fuel fixtures test both no early win and the final dawn tick.
+    await evaluate(`__game.loadScenario({time_left_s:30,random_motes:false,random_shades:false,random_drifters:false,wind_enabled:false,lanterns:__game.sim.map.lanterns.map(l=>({id:l.id,pos:[l.pos.x,l.pos.y,l.pos.z],lit:true,fuel:100}))})`);
+    await delay(200);
+    check(`night ${night} all-lit state does not win early`, await evaluate('__game.screen === "playing" && __game.sim.state === "playing"'));
+    await evaluate(`__game.loadScenario({time_left_s:2/60,random_motes:false,random_shades:false,random_drifters:false,wind_enabled:false,lanterns:__game.sim.map.lanterns.slice(0,__game.sim.requiredLitCount).map(l=>({id:l.id,pos:[l.pos.x,l.pos.y,l.pos.z],lit:true,fuel:80}))})`);
     await waitFor(night === 3 ? '__game.screen === "dawn"' : '__game.screen === "result"');
     if (night < 3) { await shot(`result-${night}`); await click('continueGame'); await waitFor('__game.screen === "intro"'); await click('enterNight'); await waitFor('__game.screen === "playing"'); }
   }
@@ -177,7 +205,7 @@ try {
   writeFileSync(join(PROOF, 'performance-gui.json'), JSON.stringify({ mode: 'isolated Chrome headless; actual WebGL rendering, real wall-clock RAF', viewport: { width:1280,height:720,deviceScaleFactor:1 },
     browser: version, gpu, cpu: cpus()[0]?.model, os: `${platform()} ${release()}`, runs: performanceRuns,
     caveat: 'Headless measurement does not replace listening to audio and measuring a normal visible browser window.' }, null, 2) + '\n');
-  writeFileSync(join(PROOF, 'gui-checks.json'), JSON.stringify({ checks, errors, fixtures: 'Map overview positions and all-lit lamps for campaign transitions; gameplay rules unchanged.' }, null, 2) + '\n');
+  writeFileSync(join(PROOF, 'gui-checks.json'), JSON.stringify({ checks, errors, fixtures: 'Explicit core scenarios for low-fuel/palette visuals, timer, loss/retry and final dawn transitions; no game tuning changed.' }, null, 2) + '\n');
   report(`== GUI passed: ${checks.length} checks ==`);
 } catch (error) {
   report(`FAIL ${error.stack ?? error}`);

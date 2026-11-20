@@ -3,7 +3,7 @@
  * `game.contract.json` ở gốc repo. Nhờ vậy contract không bao giờ lệch với code
  * (có test assert điều này).
  *
- * Phase 2 (TICKET-02): contract v1.1 — số chuẩn do nhà sản xuất quy định.
+ * Phase 3 (TICKET-03): contract v1.2 — fuel, drain và giữ sáng đến bình minh.
  */
 import contractJson from '../../game.contract.json';
 
@@ -11,7 +11,9 @@ export interface ScoreTuning {
   per_mote: number;
   per_lantern: number;
   per_stun: number;
-  per_second_left: number;
+  per_relight: number;
+  per_drain_stun: number;
+  per_lit_at_dawn: number;
   per_flame_left: number;
 }
 
@@ -40,6 +42,14 @@ export interface Tuning {
   dash_cooldown_s: number;
   night2_duration_s: number;
   night3_duration_s: number;
+  fuel_max: number;
+  fuel_decay_per_s: number;
+  fuel_per_mote: number;
+  relight_cost: number;
+  win_ratio: number;
+  drain_per_s: number;
+  low_fuel_threshold: number;
+  capacity_max: number;
   score: ScoreTuning;
 }
 

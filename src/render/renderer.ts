@@ -1,6 +1,6 @@
 /** Read-only Three.js projection of the canonical map and simulation. */
 import * as THREE from 'three';
-import { TUNING, WORLD } from '../core/config';
+import { RULES, TUNING, WORLD } from '../core/config';
 import type { NightMap, Surface } from '../core/maps';
 import type { GameSim } from '../core/sim';
 
@@ -10,6 +10,7 @@ export const PALETTE = {
   unlit: 0x5b5f6e, mote: 0xfff6c2, halo: 0xffe58a, shade: 0x120a1a,
   outline: 0x7a3cff, stunned: 0x3a3450, shirt: 0xe8e2d0, red: 0xc8102e,
   gold: 0xf2c14e, drifter: 0x8fa3b8,
+  accessibleShade: 0x00b3ff, danger: 0xff5a5f,
 };
 
 function mesh(geometry: THREE.BufferGeometry, color: number, unlit = false): THREE.Mesh {
@@ -42,6 +43,9 @@ export class Renderer {
   private haloTexture: THREE.CanvasTexture;
   private leaves = new THREE.Group();
   private projector = new THREE.Vector3();
+  private accessiblePalette = false;
+
+  setAccessiblePalette(enabled: boolean): void { this.accessiblePalette = enabled; }
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
@@ -159,16 +163,47 @@ export class Renderer {
         const g = new THREE.Group();
         const pole = mesh(new THREE.CylinderGeometry(0.15, 0.2, 3.4, 8), PALETTE.wood); pole.position.y = 1.7; g.add(pole);
         const lamp = mesh(new THREE.SphereGeometry(0.65, 12, 8), PALETTE.unlit, true); lamp.position.y = 3.7; g.add(lamp);
+        lamp.name = 'paper';
         const roof = mesh(new THREE.ConeGeometry(0.95, 0.5, 8), PALETTE.wood); roof.position.y = 4.4; g.add(roof);
         const glow = this.halo(PALETTE.core, 8, 0); glow.position.y = 3.7; g.add(glow);
         const safe = mesh(new THREE.RingGeometry(TUNING.safe_radius - 0.06, TUNING.safe_radius, 64), PALETTE.lit, true);
         safe.rotation.x = -Math.PI / 2; safe.position.y = 0.03; g.add(safe);
+        const background = new THREE.Sprite(new THREE.SpriteMaterial({ color: PALETTE.sky, depthTest: false }));
+        background.name = 'fuelBackground'; background.scale.set(2.4, 0.18, 1);
+        background.position.set(0, 5, 0); g.add(background);
+        const fill = new THREE.Sprite(new THREE.SpriteMaterial({ color: PALETTE.gold, transparent: true, depthTest: false }));
+        fill.name = 'fuelFill'; fill.scale.set(2.4, 0.12, 1); fill.center.set(0, 0.5);
+        fill.position.copy(background.position); g.add(fill);
+        const tear = new THREE.Group(); tear.name = 'tear'; tear.position.y = 3.7;
+        for (let side = 0; side < 4; side++) {
+          const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-0.22, 0.25, -0.61), new THREE.Vector3(0.07, 0.05, -0.65),
+            new THREE.Vector3(-0.07, -0.08, -0.65), new THREE.Vector3(0.2, -0.25, -0.61),
+          ]), new THREE.LineBasicMaterial({ color: PALETTE.sky }));
+          line.rotation.y = side * Math.PI / 2; tear.add(line);
+        }
+        g.add(tear);
         return g;
       }, seen);
       group.position.set(l.pos.x, l.pos.y, l.pos.z);
-      ((group.children[1] as THREE.Mesh).material as THREE.MeshBasicMaterial).color.setHex(l.lit ? PALETTE.lit : PALETTE.unlit);
-      ((group.children[3] as THREE.Sprite).material as THREE.SpriteMaterial).opacity = l.lit ? 0.75 : 0;
-      group.children[4].visible = l.lit;
+      const low = l.lit && l.fuelTicks < TUNING.low_fuel_threshold * 60;
+      const blink = !low || Math.floor(sim.simSteps / 60 * RULES.fuel_blink_hz * 2) % 2 === 0;
+      const paper = group.children[1] as THREE.Mesh;
+      (paper.material as THREE.MeshBasicMaterial).color.setHex(l.lit && blink ? PALETTE.lit : PALETTE.unlit);
+      paper.scale.y = l.lit ? 1 : 0.8;
+      group.children[2].position.y = l.lit ? 4.4 : 4.27;
+      ((group.children[3] as THREE.Sprite).material as THREE.SpriteMaterial).opacity = l.lit ? blink ? 0.75 : 0.1 : 0;
+      group.children[4].visible = l.lit && !low;
+      group.getObjectByName('fuelBackground')!.visible = l.lit;
+      const fill = group.getObjectByName('fuelFill') as THREE.Sprite;
+      fill.visible = l.lit;
+      // Keep both sprites centered above the lamp at every camera yaw.
+      const right = this.camera.matrixWorld.elements;
+      fill.position.set(-1.2 * right[0], 5 - 1.2 * right[1], -1.2 * right[2]);
+      fill.scale.x = 2.4 * l.fuelTicks / (TUNING.fuel_max * 60);
+      fill.material.color.setHex(low ? this.accessiblePalette ? 0xffffff : PALETTE.danger : PALETTE.gold);
+      fill.material.opacity = blink ? 1 : 0.3;
+      const tear = group.getObjectByName('tear')!; tear.visible = !l.lit; tear.scale.y = 0.8;
       if (l.lit) litCount++;
     });
     this.ambient.intensity = 0.15 + 0.55 * litCount / sim.lanterns.length;
@@ -185,10 +220,16 @@ export class Renderer {
       const g = this.object(`shade:${s.id}`, () => {
         const group = new THREE.Group();
         group.add(mesh(new THREE.SphereGeometry(0.9, 12, 8), PALETTE.shade));
-        group.add(this.halo(PALETTE.outline, 2.6, 0.3)); return group;
+        const outline = this.halo(PALETTE.outline, 2.6, 0.3); outline.name = 'outline'; group.add(outline);
+        const eyes = new THREE.Group(); eyes.name = 'eyes';
+        for (const x of [-0.24, 0.24]) { const eye = mesh(new THREE.SphereGeometry(0.11, 6, 5), PALETTE.outline, true); eye.position.set(x, 0.1, -0.84); eyes.add(eye); }
+        group.add(eyes); return group;
       }, seen);
       g.position.set(s.pos.x, s.pos.y, s.pos.z);
       ((g.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial).color.setHex(s.state === 'stunned' ? PALETTE.stunned : PALETTE.shade);
+      const edge = this.accessiblePalette ? PALETTE.accessibleShade : PALETTE.outline;
+      ((g.getObjectByName('outline') as THREE.Sprite).material as THREE.SpriteMaterial).color.setHex(edge);
+      g.getObjectByName('eyes')!.children.forEach((eye) => ((eye as THREE.Mesh).material as THREE.MeshBasicMaterial).color.setHex(edge));
       g.scale.setScalar(s.state === 'spawning' ? 0.6 : 1);
     }
     for (const d of sim.drifters) {

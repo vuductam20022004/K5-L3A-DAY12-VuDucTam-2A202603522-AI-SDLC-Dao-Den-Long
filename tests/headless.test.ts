@@ -13,7 +13,7 @@ function loadInputs(name: string) {
   return parseInputs(JSON.parse(readFileSync(resolve(ROOT, 'tests/scenarios', name), 'utf8')));
 }
 
-describe('headless theo Test Contract v1.1', () => {
+describe('headless theo Test Contract v1.2', () => {
   it('snapshot tick 0 ton tai va dung shape', () => {
     const r = runHeadless({ seed: 7, night: 1, ticks: 10, snapshotEvery: 10 });
     const first = JSON.parse(r.lines[0]);
@@ -38,7 +38,7 @@ describe('headless theo Test Contract v1.1', () => {
   it('thoi gian con lai giam dung 60 tick/giay', () => {
     const r = runHeadless({ seed: 7, night: 1, ticks: 60, snapshotEvery: 60 });
     const snap = JSON.parse(r.lines[r.lines.length - 2]);
-    expect(snap.time_left_s).toBeCloseTo(299, 3);
+    expect(snap.time_left_s).toBeCloseTo(239, 3);
   });
 
   it('tuong tac khong duoc chay neu khong co file inputs', () => {
@@ -52,7 +52,7 @@ describe('headless theo Test Contract v1.1', () => {
     expect(r.lines.map((l) => JSON.parse(l)).filter((o) => o.type === 'event').map((o) => o.name)).toEqual(['night_start']);
   });
 
-  it('scenario co dinh: nap sang den va thang', () => {
+  it('scenario nap sang/cham dau khong thang som (Ticket-03)', () => {
     const r = runHeadless({
       seed: 3,
       night: 1,
@@ -65,7 +65,8 @@ describe('headless theo Test Contract v1.1', () => {
     expect(events.some((e) => e.name === 'deposit')).toBe(true);
     expect(events.some((e) => e.name === 'lantern_lit')).toBe(true);
     const end = JSON.parse(r.lines[r.lines.length - 1]);
-    expect(end.state).toBe('won');
+    expect(events.some((e) => e.name === 'refuel')).toBe(true);
+    expect(end.state).toBe('playing');
   });
 
   it('Bong Muc duoi theo nguoi choi', () => {

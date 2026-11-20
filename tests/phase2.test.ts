@@ -15,17 +15,19 @@ function step(sim: GameSim, n: number, frame = idle) {
   for (let i = 0; i < n; i++) sim.step(frame);
 }
 
-describe('Ticket-02 standardized tuning', () => {
+describe('Ticket-02 regression with Ticket-03 replacements (ADR-003)', () => {
   it('uses the producer values exactly', () => {
     expect(TUNING).toEqual({
       player_speed: 6, carry_capacity: 10, lantern_cost: 10, lantern_count_night1: 5,
       pickup_radius: 1, interact_radius: 2, pulse_cost: 3, pulse_radius: 5,
-      night1_duration_s: 300, flames: 3, invuln_s: 1.5, hit_drop_ratio: 0.5,
+      night1_duration_s: 240, flames: 3, invuln_s: 1.5, hit_drop_ratio: 0.5,
       pulse_stun_s: 2, pulse_push_m: 4, pulse_cooldown_s: 3, safe_radius: 6,
       shade_speed: 4, shade_hit_radius: 1, fall_enabled: true,
       dash_speed: 14, dash_duration_s: 0.2, dash_cooldown_s: 1.5,
-      night2_duration_s: 330, night3_duration_s: 360,
-      score: { per_mote: 10, per_lantern: 100, per_stun: 5, per_second_left: 2, per_flame_left: 50 },
+      night2_duration_s: 270, night3_duration_s: 300,
+      fuel_max: 100, fuel_decay_per_s: 1, fuel_per_mote: 10, relight_cost: 5,
+      win_ratio: 0.6, drain_per_s: 5, low_fuel_threshold: 30, capacity_max: 20,
+      score: { per_mote: 5, per_lantern: 100, per_relight: 40, per_stun: 5, per_drain_stun: 15, per_lit_at_dawn: 50, per_flame_left: 50 },
     });
   });
   it('accelerates and stops in six ticks, including air control', () => {
@@ -71,7 +73,7 @@ describe('Ticket-02 standardized tuning', () => {
     sim.step(idle);
     expect(sim.score).toBe(0);
     sim.step({ ...idle, interact: true });
-    expect(sim.score).toBe(10);
+    expect(sim.score).toBe(5);
     expect(sim.lanterns[0].deposited).toBe(1);
   });
   it('capacity actually stops pickup at ten', () => {
@@ -221,10 +223,10 @@ describe('fall, charms, drifters and wind', () => {
 });
 
 describe('contract ticks, pause and campaign', () => {
-  it('all_lit wins on the exact dawn tick, but no_flames always loses', () => {
+  it('enough lit lamps win on the exact dawn tick, but no_flames always loses', () => {
     const lamps: NonNullable<Scenario['lanterns']> = Array.from({ length: 5 }, (_, i) => ({ id: `L${i + 1}`, pos: [0, 0, 0], lit: true }));
     const won = make({ time_left_s: 1 / 60, lanterns: lamps });
-    expect(won.step().find((e) => e.name === 'game_over')?.data).toEqual({ result: 'won', reason: 'all_lit' });
+    expect(won.step().find((e) => e.name === 'game_over')?.data).toEqual({ result: 'won', reason: 'dawn_survived' });
     const lost = make({ time_left_s: 1 / 60, lanterns: lamps, player: { flames: 0 } });
     expect(lost.step().find((e) => e.name === 'game_over')?.data).toEqual({ result: 'lost', reason: 'no_flames' });
   });
@@ -257,10 +259,10 @@ describe('contract ticks, pause and campaign', () => {
     sim.step(); expect(sim.simSteps).toBe(1);
   });
   it('runs exactly N clock steps after a win without scoring twice', () => {
-    const sc: Scenario = { random_motes: false, random_shades: false, random_drifters: false,
+    const sc: Scenario = { time_left_s: 1 / 60, random_motes: false, random_shades: false, random_drifters: false,
       lanterns: Array.from({ length: 5 }, (_, i) => ({ id: `L${i + 1}`, pos: [0, 0, 0], lit: true })) };
     const r = runHeadless({ seed: 1, night: 1, ticks: 200, snapshotEvery: 10, scenario: sc });
-    expect(r.ticks).toBe(200); expect(r.state).toBe('won'); expect(r.score).toBe(748);
+    expect(r.ticks).toBe(200); expect(r.state).toBe('won'); expect(r.score).toBe(895);
     expect(r.lines.filter((l) => l.includes('"game_over"'))).toHaveLength(1);
   });
   it('array frames apply in order instead of applying all at tick zero', () => {

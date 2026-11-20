@@ -1,4 +1,6 @@
 :root { color-scheme: dark; --gold: #f2c14e; --light: #f5f1e6; --red: #ff5a5f; --night: #0e1430; }
+body[data-accessible="true"] { --red: #ffffff; }
+.danger { color: var(--red); }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--night); color: var(--light); font-family: 'Segoe UI', system-ui, sans-serif; }
@@ -25,6 +27,8 @@ button.text-button { background: transparent; border-color: transparent; color: 
 #panel label { width: 320px; max-width: 90vw; text-align: left; margin-top: 10px; font-size: 14px; }
 #panel output { float: right; color: var(--gold); }
 #panel input { width: 320px; max-width: 90vw; accent-color: var(--gold); }
+#panel .toggle { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+#panel .toggle input { width: 20px; height: 20px; accent-color: var(--gold); }
 #hud { position: fixed; top: 0; left: 0; right: 0; display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 24px 30px; pointer-events: none; text-shadow: 0 2px 8px #000c; }
 .label { display: block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #c5ccda; margin-bottom: 5px; }
 #flames { display: block; color: #ffb347; font-size: 26px; letter-spacing: 4px; line-height: 1; }
@@ -44,6 +48,7 @@ button.text-button { background: transparent; border-color: transparent; color: 
 #slots span { width: 18px; height: 24px; border: 1px solid #8fa3b84d; border-radius: 3px; background: #1b235080; }
 #slots span.filled { background: #ffe58a; border-color: #fff6c2; box-shadow: 0 0 12px #ffe58a44; }
 #charm { font-size: 11px; color: var(--gold); min-height: 0; margin-top: 4px; }
+#fuelStatus { margin-top: 6px; font-size: 10px; }
 #interactHint { position: absolute; bottom: calc(100% + 15px); left: 50%; transform: translateX(-50%); white-space: nowrap; background: #0e1430e8; padding: 9px 15px; border: 1px solid var(--gold); border-radius: 5px; font-size: 13px; color: var(--gold); }
 .abilities { display: flex; justify-content: flex-end; gap: 17px; }
 .abilities > div { display: flex; gap: 9px; align-items: center; font-size: 12px; }
@@ -52,12 +57,14 @@ kbd { padding: 8px; border: 1px solid #8fa3b85c; border-radius: 5px; background:
 #direction { position: fixed; right: 30px; top: 45%; color: var(--gold); display: flex; flex-direction: column; text-align: center; padding: 10px; background: #0e143090; border-radius: 8px; pointer-events: none; }
 #arrow { display: block; font-size: 40px; line-height: 1; }
 #target { font-size: 11px; margin-top: 8px; }
-#toast { position: fixed; bottom: 155px; left: 50%; transform: translateX(-50%); max-width: 80vw; text-align: center; padding: 10px 20px; border: 1px solid #f2c14e60; border-radius: 30px; color: var(--gold); background: #0e1430e0; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+#toast { position: fixed; bottom: 190px; left: 50%; transform: translateX(-50%); max-width: 80vw; text-align: center; padding: 10px 20px; border: 1px solid #f2c14e60; border-radius: 30px; color: var(--gold); background: #0e1430e0; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
 #toast.show { opacity: 1; }
 #flash { position: fixed; inset: 0; pointer-events: none; }
 #flash.hit { animation: hit .45s ease-out; }
+body[data-accessible="true"] #flash.hit { animation: hit-accessible .45s ease-out; }
 #boot { position: fixed; inset: 0; display: grid; place-items: center; background: var(--night); color: var(--gold); }
 @keyframes hit { from { box-shadow: inset 0 0 140px #ff5a5f99; } to { box-shadow: inset 0 0 0 #ff5a5f00; } }
+@keyframes hit-accessible { from { box-shadow: inset 0 0 140px #ffffff99; } to { box-shadow: inset 0 0 0 #ffffff00; } }
 @keyframes warning { 50% { opacity: .45; } }
 @media (max-width: 800px) { #hud { padding: 15px; } #bottomHud { left: 12px; right: 12px; grid-template-columns: auto 1fr; gap: 12px; } .key-guide { display: none; } #slots span { width: 14px; } .abilities { gap: 8px; } .islands { gap: 15px; } .progress { gap: 15px; } }
 @media (prefers-reduced-motion: reduce) { #clock.danger { animation: none; } button { transition: none; } }
