@@ -1,4 +1,4 @@
-ZIP SHA256 9963fc57669289eedb3aafd48599a48e354942aeebf7fe0c4b91319f9713196e
+ZIP SHA256 c97a2f19e316c514b6c8b6ba9cf0c1ea3567ecbc3e4c3816a7b5de18320ba081
 OK native ZIP extraction and 19 SHA256 entries
 OK package has no node_modules
 OK production ZIP: menu → intro → game, actual keyboard input, no browser errors

@@ -61,5 +61,7 @@ ZIP chạy được trong `artifacts/release/dao-den-long-v1.0.0.zip` và SHA256
 Workflow `.github/workflows/release.yml` chuẩn bị đính kèm ZIP/demo/bench/soak
 khi tagv1.0.0 được push lên repo cá nhân. Người dùng đã chỉ định đích:
 `vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long`.
-Kết quả online được xác nhận riêng ở github-release.json sau khi push và xuất bản;
-tag local hoặc artifact tự nó không chứng minh repo đã public hay Actions đã chạy.
+Đã xuất bản [Release v1.0.0](https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/releases/tag/v1.0.0),
+repo public. github-release.json ghi URL, năm asset tải lại và SHA256;
+github-actions.json ghi các run CI/Release thành công lấy từ API công khai.
+ZIP tải từ Release được giải nén và kiểm tra lại bằng validate-package.mjs.

@@ -1,6 +1,6 @@
 {
   "contract_version": "1.3",
-  "source_commit": "608f17d9446fb03c0694878db483d681a5d239be",
+  "source_commit": "b10c6218cbdca4aee7ef04ecfe90677bd8ce765b",
   "source_hash_note": "UTF-8 source normalized BOM-free LF; no binary normalization",
   "sources": {
     "AGENTS.md": "86e4da6398529149ef41a8e0a3943b0b61dc57b7e5195f1a8c7af9c423b7cb26",
@@ -92,6 +92,6 @@
     "mem_end_mb": 46.5234375,
     "duration_s": 0.7360363000000001
   },
-  "release_zip_sha256": "9963fc57669289eedb3aafd48599a48e354942aeebf7fe0c4b91319f9713196e  dao-den-long-v1.0.0.zip",
+  "release_zip_sha256": "c97a2f19e316c514b6c8b6ba9cf0c1ea3567ecbc3e4c3816a7b5de18320ba081  dao-den-long-v1.0.0.zip",
   "github_release": "Publication is verified separately in github-release.json after pushing the release tag."
 }

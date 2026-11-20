@@ -1,0 +1,41 @@
+{
+  "repository": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long",
+  "visibility": "public",
+  "release_url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/releases/tag/v1.0.0",
+  "tag": "v1.0.0",
+  "published_at": "2026-11-20T16:33:48Z",
+  "draft": false,
+  "assets": [
+    {
+      "name": "dao-den-long-v1.0.0.zip",
+      "bytes": 750812,
+      "sha256": "c97a2f19e316c514b6c8b6ba9cf0c1ea3567ecbc3e4c3816a7b5de18320ba081",
+      "url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/releases/download/v1.0.0/dao-den-long-v1.0.0.zip"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 90,
+      "sha256": "eb8cbc228bcafa61024760be727b59071bae4eb7c0d17e75fe5838f3e46282f2",
+      "url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/releases/download/v1.0.0/SHA256SUMS.txt"
+    },
+    {
+      "name": "demo.mp4",
+      "bytes": 5581745,
+      "sha256": "7f1266d8eb9aaebc216a6f6fc8955cd12ff4bb265b7ea8c9127b8eeadcb1c46c",
+      "url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/releases/download/v1.0.0/demo.mp4"
+    },
+    {
+      "name": "bench.json",
+      "bytes": 300,
+      "sha256": "08ee92a78612a5ad944d1865da3ebb9999f5adf02d9f129b029e93f1bc6b5914",
+      "url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/releases/download/v1.0.0/bench.json"
+    },
+    {
+      "name": "soak.json",
+      "bytes": 269,
+      "sha256": "0b0b7eace51ea036a8503245c9c2adbc97fa50cc6c3b8836e2e1c9d4e679805a",
+      "url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/releases/download/v1.0.0/soak.json"
+    }
+  ],
+  "verification": "Public unauthenticated GitHub API and asset downloads; all digests checked, ZIP matches SHA256SUMS, demo/bench/soak byte-identical to local measured artifacts."
+}

@@ -217,9 +217,19 @@ Không ghi số đo đang quay video thành benchmark chính. Hidden tests chưa
 nghe bằng tai và máy chấm chưa kiểm. MP4 có nhãn fixtures, không giả run tay trọn
 chiến dịch. Retro bảnHTML được kiểm đúng2trangA4 và không trànfooter.
 
-GitHub đích chưa xác định: origin là repo mẫu lớp. Đã hỏi URLrepo cá nhân và
+Ban đầu GitHub đích chưa xác định: origin là repo mẫu lớp. Đã hỏi URLrepo cá nhân và
 gợi ý plugin GitHub; chưa kết nối hoặc nhận URL. Hoàn thiện local artifact,
 release notes/workflow trước; không ghi "Release online" khi mới có taglocal.
+
+Sau đó người dùng chỉ định repo vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long.
+API công khai xác nhận public và repo đích ban đầu trống; giữ repo lớp ở upstream,
+đặt origin theo URL người dùng rồi push main/v1.0.0/phase-2/phase-3. CI đạt ở
+6ae0f86 và b10c621. Lần push đầu repo mới chưa kích hoạt release nên thêm commit
+[release] chạy workflow từ main, checkout đúng tag v1.0.0; không sửa/xóa tag.
+Workflow Release44774570442 thành công, xuất bản5asset lúc2026-11-20T16:33:48Z.
+Tải lại asset qua publicHTTP, đối chiếu SHA256 và byte demo/bench/soak; kiểm lại
+ZIP Linux build bằng cùng validator. Bằng chứng GitHub được lưu riêng; commit
+bàn giao cuối và tagphase-4 bổ sung tài liệu xác nhận, không đổi gameplay.
 
 Ước tính Phase4 khoảng45–65k token; tổng4phase khoảng215–270k, không có hóa
 đơn/telemetry để khẳng định chi phí. Tiết kiệm bằng đọc có phạm vi, dùng lại

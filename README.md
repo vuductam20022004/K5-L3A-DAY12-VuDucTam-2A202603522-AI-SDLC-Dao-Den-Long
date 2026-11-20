@@ -9,6 +9,10 @@ Bóng Mực hút dầu và thắng ở bình minh của Phase 3 được giữ n
 [Video demo MP4](docs/demo/demo.mp4) · [Bằng chứng](docs/proof/phase-4/README.md) ·
 [Retro bốn phase](docs/retro.md) ([bản in2trang](docs/retro.html)) · [Changelog](CHANGELOG.md) · [Credits](CREDITS.md)
 
+[Tải bản phát hành v1.0.0](https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/releases/tag/v1.0.0):
+ZIP chạy được, video demo và báo cáo benchmark/soak. Repo public, CI kiểm chứng
+và workflow Release đã chạy thành công; chi tiết trong proof Phase4.
+
 ## Cài và chơi — ba lệnh
 
 Cần **Node.js22+**, npm, trình duyệt WebGL2 (Chrome/Edge), bàn phím và chuột,
@@ -166,4 +170,4 @@ benchmark/soak chỉ dùng nội dung chuẩn. Chi tiết tại CREDITS.md.
 - docs/release/v1.0.0.md: ghi chú release; docs/demo/demo.mp4: demo dưới5phút.
 
 LICENSE MIT. Chưa có test ẩn của giảng viên để tự xác nhận; bằng chứng công khai
-nêu đúng phạm vi đã chạy. Repo mẫu lớp không phải đích phát hành cá nhân.
+nêu đúng phạm vi đã chạy. Repo mẫu lớp được giữ ở remote upstream; origin là repo cá nhân.

@@ -1,0 +1,175 @@
+{
+  "repository": "https://api.github.com/repos/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long",
+  "verification": "Public unauthenticated GitHub Actions API",
+  "runs": [
+    {
+      "id": 44774570580,
+      "name": "Verify game contract",
+      "event": "push",
+      "head_sha": "b10c6218cbdca4aee7ef04ecfe90677bd8ce765b",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/actions/runs/44774570580",
+      "run_started_at": "2026-11-20T16:33:30Z",
+      "updated_at": "2026-11-20T16:33:56Z",
+      "jobs": [
+        {
+          "name": "verify",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm ci",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm run verify",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 44774570442,
+      "name": "Release v1.0.0",
+      "event": "push",
+      "head_sha": "b10c6218cbdca4aee7ef04ecfe90677bd8ce765b",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/actions/runs/44774570442",
+      "run_started_at": "2026-11-20T16:33:30Z",
+      "updated_at": "2026-11-20T16:33:51Z",
+      "jobs": [
+        {
+          "name": "release",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm ci",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm test",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm run package",
+              "conclusion": "success"
+            },
+            {
+              "name": "Publish runnable ZIP and demo",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 44774150761,
+      "name": "Verify game contract",
+      "event": "push",
+      "head_sha": "6ae0f861257d80e3beae03fd6a945943e7d15732",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long/actions/runs/44774150761",
+      "run_started_at": "2026-11-20T16:30:57Z",
+      "updated_at": "2026-11-20T16:31:29Z",
+      "jobs": [
+        {
+          "name": "verify",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm ci",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run npm run verify",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
