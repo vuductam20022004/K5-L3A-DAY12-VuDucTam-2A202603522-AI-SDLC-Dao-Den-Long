@@ -1,0 +1,11 @@
+{
+  "seconds": 0.3126443999999992,
+  "limitSeconds": 30,
+  "ticks": 21600,
+  "simTicks": 21600,
+  "node": "v24.13.0",
+  "os": "win32 10.0.26200",
+  "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+  "cores": 12,
+  "renderer": "none (headless core)"
+}

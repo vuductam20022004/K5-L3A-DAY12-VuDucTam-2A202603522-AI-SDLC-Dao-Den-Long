@@ -1,0 +1,32 @@
+== 1/7 typecheck ==
+OK
+== 2/7 unit tests and architecture ==
+ Test Files  10 passed (10)
+      Tests  101 passed (101)
+== 3/7 production web and headless build ==
+OK
+== 4/7 scenarios with behavioral assertions ==
+OK default: 600 ticks, state=playing, score=0
+OK lit: 300 ticks, state=won, score=1298
+OK shade: 60 ticks, state=playing, score=0
+OK pulse: 120 ticks, state=playing, score=5
+OK dash: 12 ticks, state=playing, score=0
+OK fall: 61 ticks, state=playing, score=0
+OK pause: 70 ticks, state=playing, score=0
+OK charm: 40 ticks, state=playing, score=0
+OK drifter: 122 ticks, state=playing, score=0
+OK spring: 86 ticks, state=playing, score=0
+OK tier-spring: 60 ticks, state=playing, score=0
+OK spawn: 780 ticks, state=playing, score=0
+OK wind: 2100 ticks, state=playing, score=0
+== 5/7 byte determinism across all three nights ==
+OK night 1: byte-identical (88942 bytes)
+OK night 2: byte-identical (97368 bytes)
+OK night 3: byte-identical (120802 bytes)
+== 6/7 invalid inputs, scenario and CLI => exit 2 ==
+OK bad-inputs.json: exit 2, clean stdout
+OK bad-scenario.json: exit 2, clean stdout
+OK bad-json.json: exit 2, clean stdout
+== 7/7 full night benchmark (21600 gameplay ticks, <=30 s) ==
+OK 21600 sim ticks: 0.313 s <= 30 s
+== verify passed ==

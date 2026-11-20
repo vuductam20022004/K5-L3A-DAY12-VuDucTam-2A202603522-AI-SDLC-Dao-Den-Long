@@ -1,0 +1,15 @@
+﻿== 1/5 typecheck ==
+OK
+== 2/5 unit test ==
+ Test Files  6 passed (6)
+      Tests  39 passed (39)
+== 3/5 headless smoke ==
+OK run-default.jsonl: 65 dong, end={"type":"end","ticks":600,"state":"playing","score":10}
+OK run-lit.jsonl: 14 dong, end={"type":"end","ticks":11,"state":"won","score":2835}
+OK run-shade.jsonl: 33 dong, end={"type":"end","ticks":300,"state":"playing","score":0}
+OK run-pulse.jsonl: 15 dong, end={"type":"end","ticks":120,"state":"playing","score":20}
+== 4/5 tinh dinh (2 lan chay phai giong het byte) ==
+OK: byte-identical
+== 5/5 exit code ==
+OK: input sai dinh dang -> exit 2
+== verify xong ==

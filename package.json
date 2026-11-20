@@ -1,0 +1,31 @@
+{
+  "name": "dao-den-long",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Đảo Đèn Lồng — game 3D gom đom đóm thắp đèn, né Bóng Mực (TypeScript + Three.js)",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run typecheck && npm run build:web && npm run build:headless",
+    "build:web": "vite build",
+    "build:headless": "esbuild src/headless.ts --bundle --platform=node --format=esm --target=node18 --outfile=dist/headless.js",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "headless": "node dist/headless.js",
+    "verify": "node scripts/verify.mjs",
+    "test:gui": "node scripts/gui-check.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/three": "^0.170.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  }
+}

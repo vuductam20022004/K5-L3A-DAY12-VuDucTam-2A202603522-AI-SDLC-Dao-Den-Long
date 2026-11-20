@@ -1,0 +1,32 @@
+OK menu starts with gameplay frozen
+OK night introduction precedes gameplay
+OK W moves forward in actual browser input
+OK Space jumps
+OK Q spends carried motes and starts cooldown
+OK Shift activates dash
+OK W follows rotated camera with radians converted to degrees
+OK pause freezes sim time but clock ticks continue
+OK settings update stored volume and mouse sensitivity
+OK resume returns to gameplay
+OK Web Audio unlocked and SFX were dispatched
+OK losing a night does not add campaign score
+OK retry keeps the same night and restores three flames
+OK last thirty seconds turn the clock red
+OK final ten seconds emit countdown sound
+OK nearby lamp exposes E deposit hint
+OK E lights a lamp, scores deposit and raises ambient light
+OK settings survive page reload
+OK campaign enters night 1
+OK night 1 HUD contains ten carry slots and cooldowns
+OK night 1 headless browser average FPS >= 30 (113.0)
+OK campaign enters night 2
+OK night 2 HUD contains ten carry slots and cooldowns
+OK night 2 headless browser average FPS >= 30 (94.7)
+OK campaign enters night 3
+OK night 3 HUD contains ten carry slots and cooldowns
+OK night 3 headless browser average FPS >= 30 (63.1)
+OK wind warning shows leaves and dispatches sound
+OK wind warning becomes an active gust
+OK Bình Minh totals exactly three won nights
+OK no uncaught browser exceptions
+== GUI passed: 31 checks ==

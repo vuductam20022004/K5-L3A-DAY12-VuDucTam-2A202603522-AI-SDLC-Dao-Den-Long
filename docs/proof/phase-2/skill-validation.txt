@@ -1,0 +1,2 @@
+Skill validation passed: frontmatter keys, name, description, placeholders and referenced paths.
+Node fallback used because Python/py has no installed runtime; bundled quick_validate.py could not run.
