@@ -1,0 +1,5 @@
+# Keep deterministic traces and recorded hashes stable on Windows/Linux clones.
+* text=auto eol=lf
+*.png binary
+*.mp4 binary
+*.zip binary

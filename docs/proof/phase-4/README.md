@@ -2,6 +2,9 @@
 
 Các file là output lệnh và ảnh của chương trình thật, không phải số liệu mẫu.
 Không ghi đè bằng chứng Phase1–3. Tuning/luậtv1.2 giữ nguyên.
+`.gitattributes` giữ LF khi clone trên Windows/Linux để byte regression và
+hash báo cáo không bị core.autocrlf đổi. screenshots/failure.png lưu lỗi
+harness ban đầu (biểu thức tọa độ âm); kết quả cuối ở gui-output.txt đã đạt58check.
 
 | Yêu cầu | Bằng chứng thực |
 |---|---|
@@ -56,7 +59,7 @@ kết thúc thực của input ngẫu nhiên; không ép won. Xem assumptions-ph
 
 ZIP chạy được trong `artifacts/release/dao-den-long-v1.0.0.zip` và SHA256SUMS.txt.
 Workflow `.github/workflows/release.yml` chuẩn bị đính kèm ZIP/demo/bench/soak
-khi tagv1.0.0 được push lên repo cá nhân. **Chưa xuất bản GitHub Release**:
-remote hiện là repo mẫu `VinUni-AI20k/K5-L3-LAB-Day12-AI-SDLC`, chưa nhận URL
-repo cá nhân/kết nối có quyền ghi. Không push nhầm repo lớp hoặc giả URLrelease.
-Tag local và artifact không chứng minh repo cá nhân đã public hay Actions đã chạy.
+khi tagv1.0.0 được push lên repo cá nhân. Người dùng đã chỉ định đích:
+`vuductam20022004/K5-L3A-DAY12-VuDucTam-2A202603522-AI-SDLC-Dao-Den-Long`.
+Kết quả online được xác nhận riêng ở github-release.json sau khi push và xuất bản;
+tag local hoặc artifact tự nó không chứng minh repo đã public hay Actions đã chạy.
