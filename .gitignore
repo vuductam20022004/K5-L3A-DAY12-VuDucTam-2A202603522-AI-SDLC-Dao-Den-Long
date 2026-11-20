@@ -9,3 +9,4 @@ dist/
 Thumbs.db
 coverage/
 artifacts/
+data/

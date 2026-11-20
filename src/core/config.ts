@@ -59,6 +59,8 @@ export interface Contract {
   build_cmd: string;
   run_cmd: string;
   headless_cmd: string;
+  bench_cmd: string;
+  soak_cmd: string;
   tuning: Tuning;
   rules: typeof contractJson.rules;
 }

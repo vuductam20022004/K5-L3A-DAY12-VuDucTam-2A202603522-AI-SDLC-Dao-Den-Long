@@ -3,8 +3,10 @@ import { parseInputs, parseScenario, InvalidInputError } from '../src/core/io';
 import { CONTRACT, TUNING } from '../src/core/config';
 
 describe('game.contract.json khop voi code', () => {
-  it('co contract_version 1.2 va team', () => {
-    expect(CONTRACT.contract_version).toBe('1.2');
+  it('co contract_version 1.3, bench/soak va team', () => {
+    expect(CONTRACT.contract_version).toBe('1.3');
+    expect(CONTRACT.bench_cmd).toContain('bench');
+    expect(CONTRACT.soak_cmd).toContain('soak');
     expect(CONTRACT.team).toMatch(/\S+/);
   });
 

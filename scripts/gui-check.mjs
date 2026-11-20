@@ -3,15 +3,21 @@
  * Node >=22; uses the installed Chrome and its standard DevTools protocol.
  * Run Vite first. This script never attaches to an existing browser.
  */
-import { spawn } from 'node:child_process';
+import { spawn,execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus, platform, release } from 'node:os';
 import assert from 'node:assert/strict';
+import {startLocalServer,launchBrowser} from './lib/browser.mjs';
+if(process.argv.includes('--probe-media')){
+  const probe=await launchBrowser();
+  try{console.log(JSON.stringify(await probe.evaluate(`({mp4:MediaRecorder.isTypeSupported('video/mp4'),h264:MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.42E01E'),webm:MediaRecorder.isTypeSupported('video/webm')})`)));}finally{await probe.close();}
+  process.exit(0);
+}
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const PROOF = resolve(ROOT, 'docs/proof/phase-3');
+const PROOF = resolve(ROOT, 'docs/proof/phase-4');
 const ART = resolve(ROOT, 'artifacts');
 mkdirSync(join(PROOF, 'screenshots'), { recursive: true }); mkdirSync(ART, { recursive: true });
 const chrome = process.env.CHROME_PATH ?? [
@@ -21,7 +27,8 @@ const chrome = process.env.CHROME_PATH ?? [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].find(existsSync);
 assert(chrome, 'Set CHROME_PATH to an installed Chromium browser');
-const url = process.env.GUI_URL ?? 'http://127.0.0.1:5173';
+const server=process.env.GUI_URL?undefined:await startLocalServer({development:true});
+const url = process.env.GUI_URL ?? server.url;
 const profile = mkdtempSync(join(ART, 'gui-profile-'));
 const browser = spawn(chrome, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
   '--no-first-run', '--no-default-browser-check', '--window-size=1280,720',
@@ -124,9 +131,19 @@ try {
   await shot('pause'); await click('pauseSettings');
   await evaluate(`document.getElementById('volume').value = '37'; document.getElementById('volume').dispatchEvent(new Event('input')); document.getElementById('sensitivity').value = '6.5'; document.getElementById('sensitivity').dispatchEvent(new Event('input'));`);
   check('settings update stored volume and mouse sensitivity', await evaluate('__game.settings.volume === 0.37 && __game.settings.sensitivity === 0.0065'));
+  await evaluate(`document.querySelector('.binding[data-action="forward"]').click()`);await key('i','KeyI');
+  check('movement can be rebound from the settings screen',await evaluate('__game.settings.bindings.forward === "i"'));
+  await evaluate(`document.querySelector('.binding[data-action="jump"]').click()`);await key('i','KeyI');
+  check('duplicate binding is explained and rejected',await evaluate('document.getElementById("bindingStatus").textContent.includes("Trùng") && __game.settings.bindings.jump === " "'));
+  await key(' ','Space');
+  await evaluate(`document.getElementById('largeText').checked=true;document.getElementById('largeText').dispatchEvent(new Event('change'));document.getElementById('reducedMotion').checked=true;document.getElementById('reducedMotion').dispatchEvent(new Event('change'));`);
+  check('large text is exactly 1.25 times the eighteen pixel base',await evaluate('Math.abs(parseFloat(getComputedStyle(document.body).fontSize)-22.5)<0.01'));
+  check('all visible UI leaf text is at least eighteen pixels',await evaluate(`Array.from(document.querySelectorAll('#panel *,#hud *,#bottomHud *')).filter(e=>!e.children.length&&e.textContent.trim()&&e.getClientRects().length).every(e=>parseFloat(getComputedStyle(e).fontSize)>=18)`));
   await shot('settings'); await click('settingsBack'); await click('resume');
   await waitFor('__game.screen === "playing"');
   check('resume returns to gameplay', await evaluate('__game.sim.state === "playing"'));
+  await delay(200);const remapOrigin=await evaluate('({...__game.sim.player.pos})');await key('i','KeyI',350);
+  check('the new movement key acts in gameplay',await evaluate(`Math.hypot(__game.sim.player.pos.x-(${remapOrigin.x}),__game.sim.player.pos.z-(${remapOrigin.z}))>1`));
   await evaluate(`__game.loadScenario({random_motes:false,random_shades:false,random_drifters:false,time_left_s:20,lanterns:[{id:'L1',pos:[0,0,1],lit:true,fuel:20}],shades:[{id:'S1',pos:[3,0.8,0],state:'stunned',state_ticks_left:9999}]})`);
   await delay(100);
   check('normal palette has purple shade outline and eyes', await evaluate(`__game.renderer.scene.getObjectByName('outline').material.color.getHexString() === '7a3cff' && __game.renderer.scene.getObjectByName('eyes').children.every(e => e.material.color.getHexString() === '7a3cff')`));
@@ -140,10 +157,20 @@ try {
   check('accessible shade outline and eyes use exact cyan', await evaluate(`__game.renderer.scene.getObjectByName('outline').material.color.getHexString() === '00b3ff' && __game.renderer.scene.getObjectByName('eyes').children.every(e => e.material.color.getHexString() === '00b3ff')`));
   check('accessible danger UI is white with a warning symbol', await evaluate(`getComputedStyle(document.getElementById('clock')).color === 'rgb(255, 255, 255)' && !document.getElementById('dangerMarker').hidden && document.getElementById('fuelStatus').textContent.includes('⚠')`));
   await shot('accessible-low-fuel');
+  await evaluate(`__game.loadScenario({random_motes:false,random_shades:false,random_drifters:false,shades:[{id:'S1',pos:[0.5,0.8,0],state:'chase'}]})`);await delay(120);
+  check('reduced motion suppresses hit screen flashes',await evaluate('__game.sim.player.flames===2 && !document.getElementById("flash").classList.contains("hit")'));
+  await evaluate(`__game.loadScenario({random_motes:false,random_shades:true,random_drifters:false});__game.sim.simSteps=299`);await delay(150);
+  check('shade spawn has visual captions and directional arrows',await evaluate('document.getElementById("spawnCues").children.length===2 && document.getElementById("toast").textContent.includes("Bóng Mực" )'));
+  await shot('spawn-indicators');
   const audio = await evaluate('__game.audio');
   check('Web Audio unlocked and SFX were dispatched', audio.state === 'running' && audio.sounds.jump > 0 && audio.sounds.pulse > 0 && audio.sounds.dash > 0);
   await evaluate('__game.sim.player.flames = 0'); await waitFor('__game.screen === "result"');
   check('losing a night does not add campaign score', await evaluate('__game.campaign.totalScore === 0'));
+  await evaluate(`document.getElementById('playerName').value='ab'`);
+  check('score entry rejects a name shorter than three characters',await evaluate('!document.getElementById("scoreForm").checkValidity()'));
+  await evaluate(`document.getElementById('playerName').value='QA_Lost';document.getElementById('scoreForm').requestSubmit()`);
+  await waitFor('document.getElementById("scoreStatus").textContent.includes("Đã lưu")');
+  check('losing score is saved using won-night totals',await evaluate('document.getElementById("scoreStatus").textContent.includes("Đã lưu")'));
   await click('continueGame'); await waitFor('__game.screen === "intro"');
   check('retry keeps the same night and restores three flames', await evaluate('__game.sim.night === 1 && __game.sim.player.flames === 3 && __game.sim.simSteps === 0'));
   await click('enterNight'); await waitFor('__game.screen === "playing"');
@@ -171,6 +198,19 @@ try {
   await send('Page.reload'); await waitFor('window.__game?.screen === "menu"');
   check('settings survive page reload', await evaluate('__game.settings.volume === 0.37 && __game.settings.sensitivity === 0.0065'));
   check('accessible palette survives page reload', await evaluate('__game.settings.accessiblePalette === true && document.body.dataset.accessible === "true"'));
+  check('rebound keys, motion and large text survive reload',await evaluate('__game.settings.bindings.forward==="i" && __game.settings.reducedMotion && __game.settings.largeText'));
+  await click('openLeaderboard');await waitFor('document.getElementById("leaderboardRows").textContent.includes("QA_Lost")');
+  await shot('leaderboard');
+  check('leaderboard survives a fresh page load',await evaluate('document.getElementById("leaderboardRows").textContent.includes("QA_Lost")'));
+  if(server){
+    const exported=resolve(PROOF,'export-leaderboard.json');
+    execFileSync(process.execPath,[resolve(ROOT,'dist/server.js'),'--data-dir',server.dataDir,'--export-leaderboard',exported],{cwd:ROOT,stdio:'pipe'});
+    const entries=JSON.parse((await import('node:fs')).readFileSync(exported,'utf8')).entries;
+    check('CLI export reads the exact on-disk leaderboard',entries.length===1&&entries[0].name==='QA_Lost'&&entries[0].score===0&&entries[0].nights_won===0&&Number.isFinite(Date.parse(entries[0].achieved_at)));
+  }
+  await click('leaderboardBack');await click('menuSettings');await click('resetBindings');
+  check('restore defaults resets all nine action bindings',await evaluate('JSON.stringify(__game.settings.bindings)===JSON.stringify({forward:"w",backward:"s",left:"a",right:"d",jump:" ",dash:"shift",interact:"e",pulse:"q",pause:"p"})'));
+  await click('settingsBack');
   await click('newGame'); await click('enterNight'); await waitFor('__game.screen === "playing"');
   const performanceRuns = [];
   for (const night of [1, 2, 3]) {
@@ -218,4 +258,5 @@ try {
     socket.close();
   }
   browser.kill();
+  server?.stop();
 }

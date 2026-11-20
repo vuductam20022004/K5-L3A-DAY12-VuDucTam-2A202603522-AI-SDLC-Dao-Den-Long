@@ -1,0 +1,24 @@
+name: Release v1.0.0
+on:
+  push:
+    tags: ['v1.0.0']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run package
+      - name: Publish runnable ZIP and demo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1.0.0 artifacts/release/dao-den-long-v1.0.0.zip artifacts/release/SHA256SUMS.txt docs/demo/demo.mp4 bench.json soak.json --title "Bình minh — v1.0.0" --notes-file docs/release/v1.0.0.md --verify-tag

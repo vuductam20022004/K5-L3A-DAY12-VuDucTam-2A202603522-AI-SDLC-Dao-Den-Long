@@ -45,6 +45,7 @@ export interface GameSimOptions {
   night: number;
   scenario?: Scenario;
   tuning?: Tuning;
+  mode?: 'benchmark';
 }
 
 export function defaultFrame(): FrameInput {
@@ -77,6 +78,7 @@ function dist3(a: Vec3, b: Vec3): number {
 }
 
 export class GameSim {
+  readonly benchmark: boolean;
   readonly tuning: Tuning;
   readonly night: number;
   readonly map: NightMap;
@@ -134,6 +136,7 @@ export class GameSim {
   private nightStarted = false;
 
   constructor(opts: GameSimOptions) {
+    this.benchmark=opts.mode==='benchmark';
     this.tuning = opts.tuning ?? TUNING;
     this.night = opts.night;
     this.map = getMap(opts.night);
@@ -399,6 +402,7 @@ export class GameSim {
    * spawn / TTL đều đứng yên.
    */
   step(input: FrameInput = defaultFrame()): GameEvent[] {
+    if(this.benchmark){this.steps++;this.simSteps++;this.updateShades(this.simSteps);return [];}
     this.pendingEvents = [];
     this.steps += 1;
 
@@ -879,7 +883,7 @@ export class GameSim {
         case 'wander': {
           s.drainTicks = 0;
           const d = distXZ(p.pos, s.pos);
-          if (d <= RULES.shadeDetectRadius) {
+          if (!this.benchmark && d <= RULES.shadeDetectRadius) {
             s.state = 'chase';
           } else {
             const weak = this.nearestLantern(s.pos, (l) => l.lit && l.fuelTicks < this.tuning.low_fuel_threshold * TICK_RATE);

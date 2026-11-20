@@ -1,9 +1,11 @@
 {
-  "contract_version": "1.2",
+  "contract_version": "1.3",
   "team": "2A202603522-VuDucTam",
   "build_cmd": "npm ci && npm run build",
-  "run_cmd": "npm run dev",
+  "run_cmd": "node dist/server.js",
   "headless_cmd": "node dist/headless.js",
+  "bench_cmd": "node scripts/bench.mjs",
+  "soak_cmd": "node --jitless --expose-gc dist/soak.js",
   "rules": {
     "accel": 72,
     "jumpVelocity": 7,

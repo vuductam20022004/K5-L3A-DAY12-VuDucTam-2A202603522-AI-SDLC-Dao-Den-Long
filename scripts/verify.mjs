@@ -1,7 +1,7 @@
-﻿#!/usr/bin/env node
-/** Repeatable Phase 3 verification; never overwrites earlier phases' evidence. */
+#!/usr/bin/env node
+/** Repeatable Phase 4 verification; never overwrites earlier phases' evidence. */
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync,readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cpus, platform, release } from 'node:os';
@@ -9,13 +9,13 @@ import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const PROOF = resolve(ROOT, 'docs/proof/phase-3');
+const PROOF = resolve(ROOT, 'docs/proof/phase-4');
 const ART = resolve(ROOT, 'artifacts');
 mkdirSync(PROOF, { recursive: true }); mkdirSync(ART, { recursive: true });
 const log = [];
 function report(line) { console.log(line); log.push(line); writeFileSync(resolve(PROOF, 'verify-output.txt'), log.join('\n') + '\n'); }
-function run(script, args = []) {
-  try { return execFileSync(process.execPath, [resolve(ROOT, script), ...args], { cwd: ROOT, encoding: 'utf8', stdio: 'pipe', maxBuffer: 16 * 1024 * 1024 }); }
+function run(script, args = [],flags=[]) {
+  try { return execFileSync(process.execPath, [...flags,resolve(ROOT, script), ...args], { cwd: ROOT, encoding: 'utf8', stdio: 'pipe', maxBuffer: 16 * 1024 * 1024 }); }
   catch (err) { report(`${err.stdout ?? ''}${err.stderr ?? ''}`); throw err; }
 }
 function headless(args, name, { proof = true } = {}) {
@@ -49,15 +49,16 @@ function scenario(name, night, ticks, file, input, every = 1) {
 }
 
 try {
-  report('== 1/7 typecheck =='); run('node_modules/typescript/bin/tsc', ['--noEmit']); report('OK');
-  report('== 2/7 unit tests and architecture ==');
-  const tests = run('node_modules/vitest/vitest.mjs', ['run', '--reporter=default', '--reporter=json', '--outputFile.json=docs/proof/phase-3/tests.json']);
+  report('== 1/8 typecheck =='); run('node_modules/typescript/bin/tsc', ['--noEmit']); report('OK');
+  report('== 2/8 unit tests and architecture ==');
+  const tests = run('node_modules/vitest/vitest.mjs', ['run', '--reporter=default', '--reporter=json', '--outputFile.json=docs/proof/phase-4/tests.json']);
   writeFileSync(resolve(PROOF, 'unit-tests.txt'), tests.replace(/\u001b\[[0-9;]*m/g, ''));
   report(tests.split('\n').filter((l) => /Test Files|Tests /.test(l)).join('\n'));
-  report('== 3/7 production web and headless build ==');
+  report('== 3/8 production web and headless build ==');
   const web = run('node_modules/vite/bin/vite.js', ['build']); writeFileSync(resolve(PROOF, 'build-web.txt'), web);
   await build({ entryPoints: [resolve(ROOT, 'src/headless.ts')], bundle: true, platform: 'node', format: 'esm', target: 'node18', outfile: resolve(ROOT, 'dist/headless.js') }); report('OK');
-  report('== 4/7 scenarios with behavioral assertions ==');
+  await build({entryPoints:[resolve(ROOT,'src/server.ts'),resolve(ROOT,'src/soak.ts')],bundle:true,platform:'node',format:'esm',target:'node22',outdir:resolve(ROOT,'dist')});
+  report('== 4/8 scenarios with behavioral assertions ==');
   const base = scenario('default', 1, 600, undefined, undefined, 60);
   assert.equal(base.snaps[0].motes_active, 20); assert.equal(base.snaps[0].lanterns.length, 5);
   const lit = scenario('lit', 1, 300, 'scenario-lit', 'inputs-lit', 10);
@@ -111,14 +112,14 @@ try {
   assert.equal(capacity.snaps[0].player.capacity,18); assert.equal(capacity.snaps.at(-1).player.capacity,20);
   const expiry = scenario('oil-expiry', 1, 6001, 'phase3/scenario-oil-expiry', undefined, 60);
   assert.equal(event(expiry,'lantern_out').tick,6000); assert.equal(expiry.snaps.at(-1).lanterns[0].ever_lit,true);
-  report('== 5/7 byte determinism across all three nights ==');
+  report('== 5/8 byte determinism across all three nights ==');
   for (const night of [1, 2, 3]) {
     const args = ['--seed', '12345', '--night', String(night), '--ticks', '18000', '--snapshot-every', '600', '--scenario', 'tests/scenarios/scenario-benchmark.json'];
     const a = headless(args, `det-night${night}-a.jsonl`, { proof: false });
     const b = headless(args, `det-night${night}-b.jsonl`, { proof: false });
     assert(a.bytes.equals(b.bytes)); report(`OK night ${night}: byte-identical (${a.bytes.length} bytes)`);
   }
-  report('== 6/7 invalid inputs, scenario and CLI => exit 2 ==');
+  report('== 6/8 invalid inputs, scenario and CLI => exit 2 ==');
   const invalid = [
     ['--inputs', 'bad-inputs.json', { frames: [{ tick: 5 }, { tick: 3 }] }],
     ['--scenario', 'bad-scenario.json', { player: [] }],
@@ -133,7 +134,7 @@ try {
     catch (err) { caught = err; }
     assert.equal(caught?.status, 2); assert.equal(String(caught.stdout), ''); assert(String(caught.stderr).length > 0); report(`OK ${name}: exit 2, clean stdout`);
   }
-  report('== 7/7 full night benchmark (18000 gameplay ticks, <=30 s) ==');
+  report('== 7/8 full night benchmark (18000 gameplay ticks, <=30 s) ==');
   const start = performance.now();
   const benchmark = headless(['--seed', '42', '--night', '3', '--ticks', '18000', '--snapshot-every', '600', '--scenario', 'tests/scenarios/scenario-benchmark.json'], 'run-benchmark.jsonl');
   const seconds = (performance.now() - start) / 1000;
@@ -141,5 +142,25 @@ try {
   const perf = { seconds, limitSeconds: 30, ticks: 18000, simTicks: 18000, node: process.version, os: `${platform()} ${release()}`, cpu: cpus()[0]?.model, cores: cpus().length, renderer: 'none (headless core)' };
   writeFileSync(resolve(PROOF, 'performance-headless.json'), JSON.stringify(perf, null, 2) + '\n');
   report(`OK 18000 sim ticks: ${seconds.toFixed(3)} s <= 30 s`);
+  report('== 8/8 release checks: soak, benchmark and Phase 3 byte regression ==');
+  run('dist/soak.js',['--seed','7','--nights','10','--out',resolve(ROOT,'soak.json')],['--jitless','--expose-gc']);
+  const soak=JSON.parse(readFileSync(resolve(ROOT,'soak.json'),'utf8'));
+  assert.equal(soak.nights,10);assert.equal(soak.crashes,0);assert.equal(soak.results.length,10);assert(soak.mem_end_mb<=1.2*soak.mem_start_mb);
+  writeFileSync(resolve(PROOF,'soak.json'),readFileSync(resolve(ROOT,'soak.json')));
+  report(`OK soak: ${soak.crashes} crashes, RSS ${(soak.mem_end_mb/soak.mem_start_mb).toFixed(3)}x <= 1.2x`);
+  const bench=JSON.parse(readFileSync(resolve(ROOT,'bench.json'),'utf8')),dt=JSON.parse(readFileSync(resolve(ROOT,'bench.frames.json'),'utf8'));
+  assert.equal(bench.contract_version,'1.3');assert.equal(bench.frames,dt.length);
+  const sorted=[...dt].sort((a,b)=>a-b),k=Math.max(1,Math.ceil(0.01*dt.length));
+  assert(Math.abs(bench.avg_fps-1000*dt.length/dt.reduce((a,b)=>a+b,0))<1e-6);
+  assert(Math.abs(bench.p1_low_fps-1000/(sorted.slice(-k).reduce((a,b)=>a+b,0)/k))<1e-6);
+  assert.equal(bench.frame_ms_p95,sorted[Math.ceil(0.95*dt.length)-1]);
+  assert(bench.avg_fps>=60&&bench.p1_low_fps>=30&&bench.load_ms<=10000);
+  writeFileSync(resolve(PROOF,'bench.json'),readFileSync(resolve(ROOT,'bench.json')));
+  report(`OK measured bench: avg ${bench.avg_fps.toFixed(1)}, p1-low ${bench.p1_low_fps.toFixed(1)}, load ${bench.load_ms.toFixed(0)}ms`);
+  let matched=0;
+  for(const name of readdirSync(resolve(ROOT,'docs/proof/phase-3')).filter(p=>p.endsWith('.jsonl'))){
+    assert(readFileSync(resolve(PROOF,name)).equals(readFileSync(resolve(ROOT,'docs/proof/phase-3',name))),`Phase 3 regression: ${name}`);matched++;
+  }
+  report(`OK ${matched} Phase 3 JSONL traces unchanged byte-for-byte`);
   report('== verify passed ==');
 } catch (err) { report(`FAIL: ${err.stack ?? err}`); process.exitCode = 1; }

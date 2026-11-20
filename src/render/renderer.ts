@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { RULES, TUNING, WORLD } from '../core/config';
 import type { NightMap, Surface } from '../core/maps';
 import type { GameSim } from '../core/sim';
+import { Crowd } from './crowd';
 
 export const PALETTE = {
   sky: 0x0e1430, fog: 0x1b2350, grass: 0x2f5d50, sand: 0xc9b48a,
@@ -44,8 +45,11 @@ export class Renderer {
   private leaves = new THREE.Group();
   private projector = new THREE.Vector3();
   private accessiblePalette = false;
+  private reducedMotion=false;
+  private crowd?:Crowd;
 
   setAccessiblePalette(enabled: boolean): void { this.accessiblePalette = enabled; }
+  setReducedMotion(enabled:boolean):void{this.reducedMotion=enabled;}
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
@@ -157,6 +161,9 @@ export class Renderer {
   sync(sim: GameSim): void {
     if (this.activeMap !== sim.map) this.buildMap(sim.map);
     const seen = new Set<string>();
+    const batched=sim.shades.length>32||sim.motes.length>64;
+    if(batched){if(!this.crowd){this.crowd=new Crowd(Math.max(256,sim.shades.length,sim.motes.length),this.haloTexture);this.scene.add(this.crowd.group);}this.crowd.sync(sim,this.camera,this.accessiblePalette,this.reducedMotion);}
+    if(this.crowd)this.crowd.group.visible=batched;
     let litCount = 0;
     sim.lanterns.forEach((l) => {
       const group = this.object(`lamp:${l.id}`, () => {
@@ -207,16 +214,16 @@ export class Renderer {
       if (l.lit) litCount++;
     });
     this.ambient.intensity = 0.15 + 0.55 * litCount / sim.lanterns.length;
-    for (const m of sim.motes) {
+    for (const m of batched?[]:sim.motes) {
       if (!m.active) continue;
       const g = this.object(`mote:${m.id}`, () => {
         const group = new THREE.Group(); group.add(mesh(new THREE.SphereGeometry(0.16, 6, 5), PALETTE.mote, true));
         group.add(this.halo(PALETTE.halo, 1.5, 0.5));
         const trail = this.halo(PALETTE.halo, 1, 0.18); trail.position.y = -0.3; group.add(trail); return group;
       }, seen);
-      g.position.set(m.pos.x, m.pos.y + WORLD.moteHoverHeight + Math.sin(sim.simSteps / 18 + m.pos.x) * 0.12, m.pos.z);
+      g.position.set(m.pos.x, m.pos.y + WORLD.moteHoverHeight + (this.reducedMotion?0:Math.sin(sim.simSteps / 18 + m.pos.x) * 0.12), m.pos.z);
     }
-    for (const s of sim.shades) {
+    for (const s of batched?[]:sim.shades) {
       const g = this.object(`shade:${s.id}`, () => {
         const group = new THREE.Group();
         group.add(mesh(new THREE.SphereGeometry(0.9, 12, 8), PALETTE.shade));
@@ -255,10 +262,10 @@ export class Renderer {
     for (const [id, o] of this.objects) if (!seen.has(id)) { disposeTree(o); this.objects.delete(id); }
     this.player.position.set(sim.player.pos.x, sim.player.pos.y, sim.player.pos.z);
     this.player.rotation.y = Math.atan2(sim.player.facing[0], sim.player.facing[1]);
-    this.player.visible = sim.player.deadUntilTick < 0 && (sim.simSteps > sim.player.invulnUntilTick || sim.simSteps % 8 < 5);
+    this.player.visible = sim.player.deadUntilTick < 0 && (this.reducedMotion || sim.simSteps > sim.player.invulnUntilTick || sim.simSteps % 8 < 5);
     this.playerLight.intensity = 2 + sim.player.flames;
     this.leaves.visible = sim.wind.active || sim.wind.warnUntilTick > sim.simSteps;
-    const t = sim.simSteps / 60;
+    const t = this.reducedMotion?0:sim.simSteps / 60;
     this.leaves.children.forEach((o, i) => {
       o.position.set(sim.player.pos.x + ((i * 3 + t * 8) % 22) - 11,
         sim.player.pos.y + 1 + (i % 5), sim.player.pos.z + Math.sin(i * 9 + t) * 8);
@@ -266,6 +273,7 @@ export class Renderer {
     });
   }
   showPulse(x: number, z: number, radius: number, y = 0): void {
+    if(this.reducedMotion)return;
     this.ring.position.set(x, y + 0.06, z); this.ring.scale.setScalar(radius);
     (this.ring.material as THREE.MeshBasicMaterial).opacity = 0.9;
   }

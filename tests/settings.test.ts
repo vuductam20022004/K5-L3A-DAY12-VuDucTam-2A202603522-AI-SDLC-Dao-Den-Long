@@ -5,8 +5,8 @@ describe('persistent settings payload', () => {
     expect(parseSettings(raw)).toEqual(DEFAULT_SETTINGS);
   });
   it('roundtrips preferences and clamps invalid ranges', () => {
-    expect(parseSettings('{"volume":0.8,"sensitivity":0.006}')).toEqual({ volume: 0.8, sensitivity: 0.006, accessiblePalette: false });
-    expect(parseSettings('{"volume":4,"sensitivity":-1}')).toEqual({ volume: 1, sensitivity: 0.001, accessiblePalette: false });
+    expect(parseSettings('{"volume":0.8,"sensitivity":0.006}')).toMatchObject({ volume: 0.8, sensitivity: 0.006, accessiblePalette: false });
+    expect(parseSettings('{"volume":4,"sensitivity":-1}')).toMatchObject({ volume: 1, sensitivity: 0.001, accessiblePalette: false });
   });
   it('persists the accessible palette and migrates old settings safely', () => {
     expect(parseSettings('{"accessiblePalette":true}').accessiblePalette).toBe(true);
