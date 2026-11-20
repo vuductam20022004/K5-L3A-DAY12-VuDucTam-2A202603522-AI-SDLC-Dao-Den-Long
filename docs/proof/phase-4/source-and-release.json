@@ -1,6 +1,6 @@
 {
   "contract_version": "1.3",
-  "source_commit": "29de0222afe4425eda9168048a6f40411a75e144",
+  "source_commit": "608f17d9446fb03c0694878db483d681a5d239be",
   "source_hash_note": "UTF-8 source normalized BOM-free LF; no binary normalization",
   "sources": {
     "AGENTS.md": "86e4da6398529149ef41a8e0a3943b0b61dc57b7e5195f1a8c7af9c423b7cb26",
@@ -14,7 +14,7 @@
     "scripts/clean-install.mjs": "001c9fd0866f2156bc7997d0cf4aab940b58af0b9b2c21e27bdf17f73cb7e925",
     "scripts/demo.mjs": "fb8817d9adcf18fc02a9921c4440519ce4d786ab8bf079d62aeeea7825bbdad2",
     "scripts/dev-server.mjs": "f1d8368cc37781ea7b174d332f92f51c49be42dc0247793ae95eb7a981b4a910",
-    "scripts/evidence.mjs": "870b06d40b8df356154ae7785088b621cb2a5101c71a27d45f052ba455a0b824",
+    "scripts/evidence.mjs": "b8fe668f77e98235f8611273a93f078b649335de32c6ca44808933bc793844bb",
     "scripts/gui-check.mjs": "364ada209fb450f46252860b896f9526708360999a3f6d15219d0ed0ef86037c",
     "scripts/lib/browser.mjs": "c69b51628f28b97d1c651a3cf7fc721b64e54d163e3b912632bc8bc5d0e62058",
     "scripts/package.mjs": "8c96b9c243a68289018bcfc8316fec3d1869820b62fb99fe22772cec33af6dd3",
@@ -93,5 +93,5 @@
     "duration_s": 0.7360363000000001
   },
   "release_zip_sha256": "9963fc57669289eedb3aafd48599a48e354942aeebf7fe0c4b91319f9713196e  dao-den-long-v1.0.0.zip",
-  "github_release": "Pending: personal repository URL/write connection not supplied; class template origin unchanged."
+  "github_release": "Publication is verified separately in github-release.json after pushing the release tag."
 }
