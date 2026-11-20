@@ -2,14 +2,18 @@ name: Release v1.0.0
 on:
   push:
     tags: ['v1.0.0']
+    branches: ['main']
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
   release:
+    if: github.ref == 'refs/tags/v1.0.0' || github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[release]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: v1.0.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
